@@ -74,6 +74,31 @@ class ProjectLifecycleController(QObject):
         self.config["last_project"] = resolved
         self.persist_config(self.config)
 
+    def remember_chapter(self, project_root, chapter_id: str) -> None:
+        """记住这本书上次读到哪一章——下次打开直接回到那儿。
+
+        ⚠️ **按项目分开记**：几本书各有各的位置，不能共用一个章号。
+        ⚠️ 每切一次章就写一次盘，所以值没变时直接跳过，别白写。
+        """
+        chapter_id = str(chapter_id or "").strip()
+        if not chapter_id:
+            return
+        resolved = str(Path(project_root).resolve())
+        table = self.config.get("last_chapters")
+        table = dict(table) if isinstance(table, dict) else {}
+        if table.get(resolved) == chapter_id:
+            return
+        table[resolved] = chapter_id
+        self.config["last_chapters"] = table
+        self.persist_config(self.config)
+
+    def last_chapter_for(self, project_root) -> str:
+        """这本书上次读到哪一章。没记过就返回空串。"""
+        table = self.config.get("last_chapters")
+        if not isinstance(table, dict):
+            return ""
+        return str(table.get(str(Path(project_root).resolve())) or "")
+
     def recent_projects(self) -> list[Path]:
         """Return valid, deduplicated recent projects and clean stale entries."""
         raw_paths = self.config.get("recent_projects", [])

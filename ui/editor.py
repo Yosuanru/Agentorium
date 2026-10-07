@@ -101,6 +101,23 @@ class Editor(QWidget):
         title_box.addWidget(self.path_label)
         header_layout.addLayout(title_box, 1)
 
+        # 专注模式下左栏是收起来的，读完一章就没有去下一章的入口了——
+        # 这两个按钮平时藏着，进专注才出现。
+        self.prev_chapter_button = QPushButton("上一章")
+        self.prev_chapter_button.setObjectName("focusNavButton")
+        self.prev_chapter_button.setToolTip("上一章")
+        self.prev_chapter_button.hide()
+        header_layout.addWidget(
+            self.prev_chapter_button, 0, Qt.AlignmentFlag.AlignVCenter
+        )
+        self.next_chapter_button = QPushButton("下一章")
+        self.next_chapter_button.setObjectName("focusNavButton")
+        self.next_chapter_button.setToolTip("下一章")
+        self.next_chapter_button.hide()
+        header_layout.addWidget(
+            self.next_chapter_button, 0, Qt.AlignmentFlag.AlignVCenter
+        )
+
         self.exit_focus_button = QPushButton("退出专注  Esc")
         self.exit_focus_button.setObjectName("focusExitButton")
         self.exit_focus_button.setToolTip("退出专注模式（Esc）")

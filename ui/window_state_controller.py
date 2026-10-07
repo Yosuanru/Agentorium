@@ -29,6 +29,8 @@ class WindowStateController(QObject):
         outer_splitter,
         focus_action,
         exit_focus_button,
+        prev_chapter_button=None,
+        next_chapter_button=None,
         parent=None,
     ) -> None:
         super().__init__(parent)
@@ -48,6 +50,8 @@ class WindowStateController(QObject):
         self.outer_splitter = outer_splitter
         self.focus_action = focus_action
         self.exit_focus_button = exit_focus_button
+        self.prev_chapter_button = prev_chapter_button
+        self.next_chapter_button = next_chapter_button
 
         self._current_route = "dashboard"
         self._focus_mode = False
@@ -132,6 +136,10 @@ class WindowStateController(QObject):
         self.left_panel.setVisible(visible)
         self.inspector.setVisible(visible)
         self.exit_focus_button.setVisible(not visible)
+        # 上一章 / 下一章：平时藏着（左栏在那儿，不用它），进专注才出现。
+        for button in (self.prev_chapter_button, self.next_chapter_button):
+            if button is not None:
+                button.setVisible(not visible)
         if not visible:
             self.output_container.hide()
 

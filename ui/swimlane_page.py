@@ -203,7 +203,14 @@ class SwimlanePage(QWidget):
                 self._scene.addItem(block)
 
                 if seg.label:
-                    caption = QGraphicsSimpleTextItem(seg.label, parent=block)
+                    # ⚠️ 原来这里把标签挂成段块的**子项**，位置写的是
+                    # `rect.left() - block.rect().left() + 5`——而
+                    # `block.rect().left()` 就是 `rect.left()`，两项一减恒等于 5；
+                    # 更要命的是**子项的坐标原点跟的是父项的 `pos()`（这里是 0,0），
+                    # 不是父项 rect 的左上角**。两下一凑，**每一条段块的说明文字
+                    # 全叠在画布左上角那一个点上**（看着就是一小团挤在一起的字）。
+                    # 改成：不挂父项，直接放进场景、用绝对坐标。
+                    caption = QGraphicsSimpleTextItem(seg.label)
                     font = QFont()
                     font.setPointSizeF(8.0)
                     caption.setFont(font)
@@ -212,8 +219,10 @@ class SwimlanePage(QWidget):
                     while (caption.boundingRect().width() > avail
                            and len(caption.text()) > 3):
                         caption.setText(caption.text()[:-2])
-                    caption.setPos(rect.left() - block.rect().left() + 5,
-                                   BAR_H / 2 - caption.boundingRect().height() / 2)
+                    caption.setPos(
+                        rect.left() + 5,
+                        rect.top() + (BAR_H - caption.boundingRect().height()) / 2)
+                    self._scene.addItem(caption)
 
         # 底部：章号刻度
         axis_y = top + len(data.lanes) * (LANE_H + ROW_GAP) + 2

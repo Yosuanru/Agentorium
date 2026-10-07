@@ -185,6 +185,8 @@ class MainWindow(QMainWindow):
             outer_splitter=self.outer_splitter,
             focus_action=self.actions["focus"],
             exit_focus_button=self.editor.exit_focus_button,
+            prev_chapter_button=self.editor.prev_chapter_button,
+            next_chapter_button=self.editor.next_chapter_button,
             parent=self,
         )
         self.story_navigation_controller = StoryNavigationController(
@@ -693,6 +695,57 @@ class MainWindow(QMainWindow):
             self._on_save_conflict_detected
         )
         self.editor.exit_focus_button.clicked.connect(self._exit_focus_mode)
+        self.editor.prev_chapter_button.clicked.connect(
+            lambda: self._open_adjacent_chapter(-1))
+        self.editor.next_chapter_button.clicked.connect(
+            lambda: self._open_adjacent_chapter(1))
+
+    def _open_adjacent_chapter(self, step: int) -> None:
+        """上一章 / 下一章。
+
+        专注模式下左栏是收起来的，读完一章本来就没有去下一章的入口——
+        这两个按钮就是为那一下补的。到头顶/到底了就把那个按钮置灰，
+        而不是点了没反应。
+        """
+        project = self.project_session.project
+        if project is None:
+            return
+        try:
+            chapters = list(project.list_chapters())
+        except OSError:
+            return
+        ids = [path.stem for path in chapters]
+        current = self.editor.current_chapter_id()
+        if current not in ids:
+            return
+        index = ids.index(current) + step
+        if not 0 <= index < len(chapters):
+            self._refresh_chapter_nav()
+            return
+        self.left_panel.select_path(chapters[index])
+        self._refresh_chapter_nav()
+
+    def _refresh_chapter_nav(self) -> None:
+        """按当前这一章在列表里的位置，把两个按钮该灰的灰掉。"""
+        project = self.project_session.project
+        prev_button = self.editor.prev_chapter_button
+        next_button = self.editor.next_chapter_button
+        if project is None:
+            prev_button.setEnabled(False)
+            next_button.setEnabled(False)
+            return
+        try:
+            ids = [path.stem for path in project.list_chapters()]
+        except OSError:
+            ids = []
+        current = self.editor.current_chapter_id()
+        if current not in ids:
+            prev_button.setEnabled(False)
+            next_button.setEnabled(False)
+            return
+        index = ids.index(current)
+        prev_button.setEnabled(index > 0)
+        next_button.setEnabled(index < len(ids) - 1)
 
     def _open_dashboard_main_arc(self) -> None:
         project = self.project
@@ -1361,6 +1414,10 @@ class MainWindow(QMainWindow):
             if self._resolve_save_conflict():
                 opened = self.document_controller.open_file(category, path_str)
         if opened and self.project:
+            if category == "章节":
+                # 记住读到哪一章——下次打开这本书直接回这儿。
+                self.project_lifecycle_controller.remember_chapter(
+                    self.project.root, Path(path_str).stem)
             self.view_refresh_controller.refresh_inspector(self.project)
             self._show_route(
                 self.story_navigation_controller.route_for_category(category)
@@ -1444,6 +1501,7 @@ class MainWindow(QMainWindow):
     def toggle_focus_mode(self) -> None:
         if self.window_state_controller.current_route not in {"writing", "canon"}:
             self._show_route("writing")
+        self._refresh_chapter_nav()          # 进专注前先把两个按钮的灰/亮摆对
         self.window_state_controller.toggle_focus_mode()
 
     def _exit_focus_mode(self) -> None:
@@ -2639,8 +2697,21 @@ class MainWindow(QMainWindow):
         last = self.project_lifecycle_controller.safe_project_path(
             self.config.get("last_project")
         )
-        if last is not None:
-            self._load_project(last, quiet=True)
+        if last is None:
+            return
+        # ⚠️ **必须先把章号读出来，再加载项目。**
+        # 加载项目本身就会默认打开第一章，那一下会顺手把"上次读到哪一章"
+        # 覆盖成第一章（`_on_file_selected` 里在记）——回头再读就读不到了。
+        chapter_id = self.project_lifecycle_controller.last_chapter_for(last)
+        self._load_project(last, quiet=True)
+        # 光回到项目还不够——顺带回到上次读到的那一章，
+        # 不然每开一次都要自己从树里再找一遍。
+        project = self.project
+        if project is None or not chapter_id:
+            return
+        path = project.chapters_dir / f"{chapter_id}.md"
+        if path.is_file():
+            self.left_panel.select_path(path)
 
     def _update_window_title(self) -> None:
         self.setWindowTitle("Agentorium")

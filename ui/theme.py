@@ -509,6 +509,17 @@ QPushButton#focusExitButton {
     padding: 7px 13px;
 }
 QPushButton#focusExitButton:hover { background: __ACCENT__; color: __ACCENT_TEXT__; }
+/* 上一章 / 下一章：只在专注模式里出现。描边不用底，跟"退出专注"区分开；
+   到头顶或到底了，描边和字一起褪成灰的——一眼看得出"这条路到头了"。 */
+QPushButton#focusNavButton {
+    background: transparent;
+    color: __ACCENT__;
+    border: 1px solid __ACCENT__;
+    border-radius: 9px;
+    padding: 7px 13px;
+}
+QPushButton#focusNavButton:hover { background: __ACCENT__; color: __ACCENT_TEXT__; }
+QPushButton#focusNavButton:disabled { color: __MUTED__; border-color: __MUTED__; }
 QPushButton#dangerButton { color: __DANGER__; }
 QPushButton#linkButton { background: transparent; border: none; color: __ACCENT__; text-align: left; }
 
