@@ -364,7 +364,7 @@ class AIWorkflowController(QObject):
         notice = QMessageBox(self.parent)
         notice.setIcon(QMessageBox.Icon.Information)
         notice.setWindowTitle("使用 AI 功能前请确认")
-        notice.setText("AI 功能会把创作内容交给本机配置的 AI 引擎（claude）处理。")
+        notice.setText("AI 功能会把创作内容交给你在设置里配置的那条 AI 通道处理。")
         notice.setInformativeText(
             "发送内容可能包括当前章节、故事大纲、写作风格指南、角色与世界观设定、章节摘要和故事状态。\n\n"
             "请勿提交无权处理的作品或敏感个人信息。AI 输出可能存在错误，使用或公开前请自行审阅。"

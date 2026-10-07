@@ -5,8 +5,8 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 from unittest.mock import patch
 
-from core.app_paths import app_cache_dir, app_config_dir, update_cache_dir
-from core.config import get_update_cache_path, load_config, normalize_config, save_config
+from core.app_paths import app_cache_dir, app_config_dir
+from core.config import load_config, normalize_config, save_config
 
 
 class ApplicationPathTests(TestCase):
@@ -27,8 +27,6 @@ class ApplicationPathTests(TestCase):
                 app_cache_dir(),
                 Path(r"C:\Users\writer\AppData\Local") / "Agentorium",
             )
-            self.assertEqual(update_cache_dir(), app_cache_dir() / "updates")
-            self.assertEqual(get_update_cache_path(), update_cache_dir())
 
     def test_linux_honors_xdg_directories(self) -> None:
         with patch("core.app_paths.sys.platform", "linux"), patch.dict(

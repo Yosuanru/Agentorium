@@ -1058,7 +1058,8 @@ class SettingsPage(QWidget):
         privacy_title.setObjectName("sectionTitle")
         privacy_text = QLabel(
             "作品、项目配置和故事记忆默认保存在本地。主动运行 AI 任务时，"
-            "当前章节及任务需要的上下文可能通过本机 AI 引擎（claude）发送给它配置的服务。"
+            "当前章节及任务需要的上下文会发给你在「AI 引擎」里配置的那条通道"
+            "（直连 API 就发到那个服务商，本机 claude 命令则由它自己管）。"
         )
         privacy_text.setObjectName("mutedLabel")
         privacy_text.setWordWrap(True)

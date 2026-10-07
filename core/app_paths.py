@@ -48,11 +48,6 @@ def app_cache_dir() -> Path:
     )
 
 
-def update_cache_dir() -> Path:
-    """Return the directory reserved for downloaded update artifacts."""
-    return app_cache_dir() / "updates"
-
-
 def legacy_application_root() -> Path:
     """Return the old writable application root used before per-user storage."""
     if getattr(sys, "frozen", False):

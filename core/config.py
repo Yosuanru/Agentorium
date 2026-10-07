@@ -8,7 +8,7 @@ from typing import Any
 
 from copy import deepcopy
 
-from .app_paths import app_config_dir, legacy_application_root, update_cache_dir
+from .app_paths import app_config_dir, legacy_application_root
 from .theme_tokens import DARK_COLORS, LIGHT_COLORS
 from .storage import atomic_write_text
 
@@ -70,11 +70,6 @@ def get_config_path() -> Path:
 def get_legacy_config_path() -> Path:
     """Return the pre-migration config path beside the application source."""
     return legacy_application_root() / "config.json"
-
-
-def get_update_cache_path() -> Path:
-    """Return the directory reserved for future update downloads."""
-    return update_cache_dir()
 
 
 def load_config() -> dict:
