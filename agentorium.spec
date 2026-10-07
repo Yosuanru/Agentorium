@@ -16,6 +16,9 @@ runtime_data = [
     (str(project_root / "README.md"), "."),
     (str(project_root / "THIRD_PARTY_NOTICES.md"), "."),
     (str(project_root / "config.example.json"), "."),
+    # 空示例书一起带上：别人解开就是能看见东西的工作台，
+    # 而不是一个什么都没有的空壳（详见 FILES.md 第三节）。
+    (str(project_root / "projects" / "example"), "projects/example"),
 ]
 
 a = Analysis(
