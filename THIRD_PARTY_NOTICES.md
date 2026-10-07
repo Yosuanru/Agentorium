@@ -1,5 +1,8 @@
 # Third-party notices
 
+> **中文说明**：这份列的是用到的**第三方组件及其许可证**（PySide6 / PyInstaller /
+> 字体 / Python …），以及**上游项目的署名**。打包分发时要把 `licenses/` 一起带上。
+
 Agentorium uses the following third-party components. The application
 code remains separately copyrightable and is not made subject to the GPL solely
 by using the LGPL option offered by Qt for Python.

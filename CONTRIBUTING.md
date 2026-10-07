@@ -1,5 +1,8 @@
 # Contributing to Agentorium
 
+> **中文说明**：这份写的是「改动怎么提交」——**不带密钥、不带私人稿子**；
+> 上游的版权声明要保留；提 PR 时说清对用户看得见的影响。
+
 Contributions are welcome through issues and pull requests.
 
 Before submitting a change:

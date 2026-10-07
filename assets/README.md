@@ -1,5 +1,7 @@
 # Application assets
 
+> **中文说明**：这份说明本目录里的**图标与字体资产及其许可**。
+
 `app_icon.png` is the canonical Agentorium application icon. `app_icon.ico` is
 the Windows-compatible icon generated from the same artwork.
 

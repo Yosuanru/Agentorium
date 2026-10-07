@@ -1,5 +1,7 @@
 # Bundled third-party license texts
 
+> **中文说明**：这些是**打包分发时必须随程序一起附上**的许可证文本。
+
 The Windows package places this directory next to `Agentorium.exe` so the
 license terms for redistributed runtimes and fonts remain directly available
 after extraction.

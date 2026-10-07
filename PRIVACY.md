@@ -1,5 +1,8 @@
 # Privacy and AI processing
 
+> **中文说明**：这份写的是「**数据去哪儿了**」——本程序**自己不发起任何网络请求**；
+> AI 任务的内容发给你在设置里配的那条通道；密钥只存本机，不进仓库。
+
 ## Local data
 
 Agentorium is a local desktop application. It does not operate a cloud service,
