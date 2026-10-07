@@ -8,3 +8,5 @@ _build/
 *.egg-info/
 .env
 _scratch/
+_backups/
+config.json
