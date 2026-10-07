@@ -1462,6 +1462,24 @@ class MainWindow(QMainWindow):
         # 不会因为 __file__ 落在 bundle 里而找不到 CLAUDE.md 和技法样本。
         return workspace_root()
 
+    def _workspace_caveat(self) -> str:
+        """本机没有配套素材库时，先给 AI 一句提醒。
+
+        ⚠️ `style/技法样本/` `lore/` `拆文库/` `CLAUDE.md` 这些，是**本项目的可选搭档**，
+        不是这个程序的一部分——别人把仓库单独拉下来跑，这些目录一个都不存在。
+        不提醒的话，它会照着系统提示词里的清单一个个去找、然后落空。
+        （本机有素材库时返回空串，跟以前完全一样。）
+        """
+        root = self._workspace_root()
+        if (root / "style" / "技法样本").is_dir() or (root / "拆文库").is_dir():
+            return ""
+        return (
+            "# ⚠️ 先看这一条\n"
+            "**这台机器上没有 `style/技法样本/`、`lore/`、`拆文库/`、`CLAUDE.md` 这些目录**——\n"
+            "它们是本项目的**可选配套资料**（写作素材库、拆书产物），不是这个程序的一部分。\n"
+            "下面提到它们的地方，**找不到就跳过**：别照着清单一个个去找，**更别凭印象编**。\n"
+            "你手上真正有的，是「当前作品」那一段里那个项目目录。")
+
     def _read_kernel(self) -> str:
         try:
             md = (self._workspace_root() / "CLAUDE.md").read_text(encoding="utf-8")
@@ -1489,8 +1507,10 @@ class MainWindow(QMainWindow):
             "  想让他先过目也行：把改后的正文放进「正文」块，他会看到「应用到正文」按钮。\n"
             "  块外面用一两句说你动了哪儿。**别只讲思路、别让作者自己复制粘贴。**",
 
+            self._workspace_caveat(),
+
             "# 这个应用怎么运转（**你自己就是它的一部分，这些必须门儿清**）\n"
-            "面板叫 Agentorium。一本书 = `%s/panel/projects/{书名}/` 下的一个目录，\n"
+            "面板叫 Agentorium。一本书 = `%s/projects/{书名}/` 下的一个目录，\n"
             "一个项目一个区，互不干扰：\n\n"
             "```\n"
             "{书名}/\n"
@@ -1537,7 +1557,7 @@ class MainWindow(QMainWindow):
             "我依据的是原文/摘要，还是我自己想象出来的？\n\n"
             "# 三条长期合作规矩（2026-10-03 定）\n\n"
             "**一、裁定要留痕。** 作者推翻自己的时候（某个角色死不死、某条伏笔收不收、\n"
-            "某张地图怎么画、时间怎么推），**把这次裁定记一行**到 `panel/projects/{书}/decision-log.md`：\n"
+            "某张地图怎么画、时间怎么推），**把这次裁定记一行**到 `projects/{书}/decision-log.md`：\n"
             "`- 第N章｜推翻了什么｜新定的是什么｜为什么`。\n"
             "你要不要维护这个文件不用问他——**他只需要拍板，你负责落笔**。\n"
             "⚠️ 不记的后果：到几百章他会反复推翻自己，同一场争论用同样的话术再来一遍，\n"
@@ -1579,7 +1599,7 @@ class MainWindow(QMainWindow):
             "  再按指针（`01#12 · L84`）去册里读那几条。按「本章是什么类型」挑册，会漏掉跨册的同处境条目。\n"
             "  ⚠️ `01`–`10` 这十册只管「**一个场景怎么落笔**」；`11`–`13` 三册管「**一个人 / 一套设定 /\n"
             "  一整本怎么走完全程**」。精拆产出的**全局材料**（角色卡 / 世界观 / 体系设定 /\n"
-            "  总大纲 / 逐章摘要 / 伏笔表 / 角色索引 / 文风指南，都在 `panel/projects/{书}/`）\n"
+            "  总大纲 / 逐章摘要 / 伏笔表 / 角色索引 / 文风指南，都在 `projects/{书}/`）\n"
             "  **也要按「本章要干什么」翻**：立人物→`11` + 角色卡；揭设定→`12` + 体系设定＋世界观；\n"
             "  铺/收线、卷与卷接续→`13` + 总大纲＋伏笔表；接一个久未露面的人→角色索引＋章节摘要；\n"
             "  定手感→ `writing/style_guide.md`。\n"
@@ -1595,7 +1615,7 @@ class MainWindow(QMainWindow):
             "  **拆完必须照它的「第 7 步 · 收尾」把产物同步进项目**——\n"
             "  **面板上看得见的每一项**都要补到最新章：人物 / 伏笔 / 设定 / 线索词表 /\n"
             "  关系图 / 总大纲 / 后续剧情规划 / 文风指南 / 世界观 / 体系设定 / 时间线 /\n"
-            "  章节摘要 / 故事状态 / 角色索引 / 章节文件，落到 `panel/projects/{书}/` 对应文件里。\n"
+            "  章节摘要 / 故事状态 / 角色索引 / 章节文件，落到 `projects/{书}/` 对应文件里。\n"
             "  **拆到哪章就同步到哪章。**「分析」页里只有**节奏曲线**是自动的，不用同步；\n"
             "  **线索轨迹不是**——它要 `拆文库/{书}/线索词表.txt`，收尾必须手填，空着表就是空的。\n"
             "  ⚠️ 收尾时**拿不准的自己定、做完再说**，不许先甩一份待办清单给作者。\n"
@@ -1610,8 +1630,8 @@ class MainWindow(QMainWindow):
             "- `拆文库/{书名}/` —— 拆过的书：`chapter_index.csv`（章节表）、\n"
             "  `作品分析.md`、`线索词表.txt`、`拆解小结.md`、`原文/原文.txt`、\n"
             "  `章节/第N章_摘要.md`。**可以直接读原文。**\n"
-            "- 你自己的书在 `panel/projects/{项目}/`：`canon/`（设定）、`outline/`（大纲）、\n"
-            "  `memory/`（记忆与伏笔）、`writing/style_guide.md`（文风）。" % (root, root),
+            "- 你自己的书在 `projects/{项目}/`：`canon/`（设定）、`outline/`（大纲）、\n"
+            "  `memory/`（记忆与伏笔）、`writing/style_guide.md`（文风）。" % (app_home(), root),
 
             "# 不要做的\n"
             "- **不凭空造设定。**推理链的每一环都要能在前文找到出处。\n"
@@ -1636,7 +1656,7 @@ class MainWindow(QMainWindow):
             parts.append(
                 "# 上次你们聊到哪（最近 30 句）\n"
                 "**这是后台带上的，作者屏幕上并没有显示这些**——别以为他刚说过。\n"
-                "要翻更早的，去读 `panel/projects/{书}/memory/对话记录.md`（那里是全量）。\n\n"
+                "要翻更早的，去读 `projects/{书}/memory/对话记录.md`（那里是全量）。\n\n"
                 + digest)
         text = self.editor.text_edit.toPlainText().strip()
         if text:
@@ -1646,7 +1666,8 @@ class MainWindow(QMainWindow):
                 "⚠️ 磁盘上的文件可能还是旧的——作者改了不一定存过。"
                 "要引用正文、要判断写到哪儿了，都用下面这一段，不要再去读文件。\n\n"
                 + text[:6000])
-        return "\n\n---\n\n".join(parts)
+        # 空段（比如没有素材库时的提醒）不参与拼接，免得留一串光秃秃的分隔线。
+        return "\n\n---\n\n".join(part for part in parts if part)
 
     def _project_memory_brief(self, project, chapter_id: str | None = None) -> str:
         """这本书现在的样子——**每次说话都自动摆在它眼前**。
