@@ -47,16 +47,8 @@ Leave it blank and no credential is stored by this application at all.
 Never commit `.env` files, API keys, tokens, personal `config.json` files, or
 private writing projects.
 
-## Update checks
+## Network access
 
-Manual update checks, and automatic checks when explicitly enabled, request the
-public GitHub Releases list for the repository named by `RELEASES_REPO` in
-`core/update_service.py`. **That constant ships as a placeholder**, so update
-checks are effectively off unless the repository owner fills it in. These
-requests never include story projects, prompts, AI credentials, or the contents
-of `config.json`. GitHub receives ordinary network metadata such as the user's
-IP address and a version User-Agent. Automatic checks run at most once every
-24 hours.
-
-The updater only displays release information and can open the release page. It
-does not download or execute update files.
+Agentorium makes no network requests of its own. The only outbound traffic is
+what the local `claude` command does for an AI task you started, going to the
+endpoint you configured (see "What gets sent, and where" above).

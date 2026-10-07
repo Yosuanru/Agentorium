@@ -182,10 +182,3 @@ projects/               你的书就放在这儿（每本书一个目录）
 - 界面与交互的重新设计，以及针对长周期写作的一批修复。
 
 完整的第三方依赖许可见 `THIRD_PARTY_NOTICES.md` 与 `licenses/`。
-
----
-
-## 附：内置更新
-
-「帮助 → 检查更新」读取 GitHub Releases。**`core/update_service.py` 顶部的
-`RELEASES_REPO` 是占位值，要发布时改成你自己的仓库**；不填也能正常用，只是检查更新查不到东西。
