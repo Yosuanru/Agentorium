@@ -139,12 +139,13 @@
 | 你要找什么 | 在哪 |
 |---|---|
 | 工作台本体（写稿、记忆、表格、框架图、关系图） | `ui/` `core/` |
-| 一次 AI 任务怎么拼上下文、怎么发、怎么收 | `core/prompt_builder.py` · `core/claude_client.py` · `ui/ai_workflow_controller.py` |
+| 一次 AI 任务怎么拼上下文、怎么发、怎么收 | `core/prompt_builder.py` · `ui/ai_workflow_controller.py` |
+| 引擎走哪个后端（本机命令 / 直连 API） | `core/engine.py` · `core/claude_client.py` · `core/api_client.py` |
 | "AI 拿到的这本书现在什么样" | `ui/main_window.py` 的 `_project_memory_brief` |
 | 上下文放不下时怎么裁 | `core/context_budget.py` |
 | 一致性检查怎么跑 | `core/consistency.py` |
 | 伏笔/记忆/摘要这些账本 | `core/foreshadowing.py` · `core/project_data.py` · `memory/` |
-| 换一套 API / 换模型 | 设置 → AI 引擎（见 `README.md` 第五节） |
+| 换一套 API / 换模型 / 换后端 | 设置 → AI 引擎（见 `README.md` 第六节） |
 
 **它没有替你把流程自动化**——这是个刻意的选择：流程里每一步"判"的地方，都要人。
 把它做成一键流水线，你就会得到一个"每次都同意你"的系统，而那正是这套东西要防的。

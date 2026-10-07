@@ -6,8 +6,7 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QApplication
 
 from core.config import normalize_config, save_config
-from core.claude_client import ClaudeClient
-from core.paths import workspace_root
+from core.engine import create_engine
 from ui.ai_task_runner import AITask
 from ui.ai_engine_controller import AIEngineController
 from ui.document_controller import DocumentController
@@ -67,18 +66,9 @@ class SettingsController(QObject):
         # 引擎早就换成本机 claude 了，这里却还在用 DSHClient——它会拼
         # `--profile headless`，而 claude CLI 没这个参数，于是「测试连接」**必然失败**，
         # 作者以为 AI 坏了，其实真实任务走的是 ClaudeClient、好好的。
-        client = ClaudeClient(
-            command=test_config["ai_command"],
-            launcher_args=test_config["ai_launcher_args"],
-            timeout=min(15, int(test_config["ai_timeout"])),
-            extra_args=test_config["ai_extra_args"],
-            # 「测试能不能连上」要拿**正在编辑的那份**去试——不然改了地址/密钥，
-            # 点测试还是拿旧的连，看起来像"没生效"。
-            api_base_url=test_config["api_base_url"],
-            api_key=test_config["api_key"],
-            api_model=test_config["api_model"],
+        client = create_engine(
+            test_config, timeout=min(15, int(test_config["ai_timeout"]))
         )
-        client.set_working_directory(workspace_root())
         self._connection_task = AITask(
             lambda _cancel_event: client.generate("你是连通性自检。只回两个字：可以。", "在吗"),
             parent=self,

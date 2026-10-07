@@ -955,10 +955,12 @@ class SettingsPage(QWidget):
         ai_title = QLabel("AI 引擎")
         ai_title.setObjectName("sectionTitle")
         ai_hint = QLabel(
-            "面板通过本机的 claude 命令调用 AI（无头模式 -p）——它只是个客户端，"
-            "请求打到哪、用哪个模型、拿什么凭据，全看下面这三项。\n"
-            "① 三项留空 ＝ 用本机 claude 自己的登录（默认）。\n"
-            "② 填了接口地址和密钥 ＝ 整个面板都走你自己那个 API（跟 CC Switch 一个做法）。\n"
+            "两种后端二选一，看下面「引擎」那一格：\n"
+            "① **直连 API**——填上接口地址、密钥、模型名就能用，**什么都不用装**。"
+            "扩写 / 一致性检查 / 更新记忆全都能跑；只有对话栏的「直接改文件」会退化成"
+            "「给你一段改稿，你点一下应用到正文」。\n"
+            "② **本机 claude 命令**——走 Claude Code（先 `npm i -g @anthropic-ai/claude-code`）。"
+            "功能最全：它是个真正的 agent，能自己读写文件、派子代理。\n"
             "⚠️ 密钥只存在本机（%APPDATA%\\Agentorium\\config.json），不会进任何仓库。"
         )
         ai_hint.setObjectName("mutedLabel")
@@ -966,6 +968,14 @@ class SettingsPage(QWidget):
         ai_layout.addWidget(ai_title)
         ai_layout.addWidget(ai_hint)
         ai_form = QFormLayout()
+        # 后端二选一，决定下面哪些格子用得上（见 core/engine.py）。
+        self.engine = QComboBox()
+        self.engine.addItem("直连 API（不用装任何东西）", "api")
+        self.engine.addItem("本机 claude 命令（全功能）", "cli")
+        self.engine.setToolTip(
+            "直连 API：填地址+密钥就能用，扩写/检查/记忆全支持；\n"
+            "本机 claude 命令：要装 Claude Code，但它是 agent，能自己读写文件。"
+        )
         # —— 接自己的 API（三项都留空就还是走本机 claude 的登录）——
         self.api_base_url = QLineEdit()
         self.api_base_url.setPlaceholderText("留空 = 用本机 claude 自己的登录")
@@ -992,6 +1002,7 @@ class SettingsPage(QWidget):
         self.timeout = QSpinBox()
         self.timeout.setRange(30, 1800)
         self.timeout.setSuffix(" 秒")
+        ai_form.addRow("引擎", self.engine)
         ai_form.addRow("接口地址", self.api_base_url)
         ai_form.addRow("密钥", self.api_key)
         ai_form.addRow("模型名", self.api_model)
@@ -1076,6 +1087,13 @@ class SettingsPage(QWidget):
         self.ai_context_history_chapters.setValue(
             int(config.get("ai_context_history_chapters", 5))
         )
+        # ⚠️ 先把值归一到两个合法项再找——不然配置里写坏了（手改 json），
+        # findData 返回 -1，落到第一项去，跟 core/config.py 的兜底对不上。
+        _engine = str(config.get("ai_engine") or "cli").strip().casefold()
+        if _engine not in {"api", "cli"}:
+            _engine = "cli"
+        _engine_index = self.engine.findData(_engine)
+        self.engine.setCurrentIndex(max(0, _engine_index))
         self.api_base_url.setText(str(config.get("api_base_url") or ""))
         self.api_key.setText(str(config.get("api_key") or ""))
         self.api_model.setText(str(config.get("api_model") or ""))
@@ -1110,6 +1128,7 @@ class SettingsPage(QWidget):
                 "ai_launcher_args": launcher_args,
                 "ai_profile": "headless",
                 "ai_extra_args": extra_args,
+                "ai_engine": self.engine.currentData(),
                 "api_base_url": self.api_base_url.text().strip(),
                 "api_key": self.api_key.text().strip(),
                 "api_model": self.api_model.text().strip(),

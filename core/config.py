@@ -24,6 +24,9 @@ _LEGACY_KEY_RENAMES = (
 
 
 DEFAULT_CONFIG = {
+    # 走哪个后端：`cli` = 本机 claude 命令（全功能）；`api` = 直连 HTTP 端点
+    # （只要有地址和 key 就能用，什么都不用装）。见 core/engine.py。
+    "ai_engine": "cli",
     # ⚠️ 键名历史上叫 `dsh_*`，一直没改——改名要迁移所有人的旧配置，
     # 不值当。**值**才是引擎本身：现在是本机的 `claude` 命令。
     "ai_command": "claude",
@@ -161,6 +164,8 @@ def _normalize_config(config: dict[str, Any]) -> None:
     for _old, _new in _LEGACY_KEY_RENAMES:
         if _old in config and not config.get(_new):
             config[_new] = config[_old]
+    _engine = str(config.get("ai_engine") or "cli").strip().casefold()
+    config["ai_engine"] = _engine if _engine in {"cli", "api"} else "cli"
     config["ai_command"] = str(config.get("ai_command") or "claude").strip()
     config["ai_profile"] = "headless"
     # 「面板自己接的 API」三项：一律去空白。留空就是"不用它"。

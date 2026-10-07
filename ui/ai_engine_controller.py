@@ -10,9 +10,8 @@ from typing import Callable
 
 from PySide6.QtCore import QObject
 
-from core.claude_client import ClaudeClient
+from core.engine import EngineClient, create_engine
 from core.config import normalize_config
-from core.paths import workspace_root
 
 
 class AIEngineController(QObject):
@@ -26,15 +25,15 @@ class AIEngineController(QObject):
     ):
         super().__init__(parent)
         self._is_task_running = is_task_running
-        self._client: ClaudeClient | None = None
-        self._retired_clients: list[ClaudeClient] = []
+        self._client: EngineClient | None = None
+        self._retired_clients: list[EngineClient] = []
         self.configure(config)
 
     @property
-    def client(self) -> ClaudeClient | None:
+    def client(self) -> EngineClient | None:
         return self._client
 
-    def configure(self, config: dict) -> ClaudeClient:
+    def configure(self, config: dict):
         """Replace the active client, deferring cleanup while a task runs."""
         normalized = normalize_config(config)
         previous = self._client
@@ -44,23 +43,9 @@ class AIEngineController(QObject):
             else:
                 previous.cleanup()
 
-        client = ClaudeClient(
-            command=normalized["ai_command"],
-            launcher_args=normalized["ai_launcher_args"],
-            timeout=normalized["ai_timeout"],
-            extra_args=normalized["ai_extra_args"],
-            api_base_url=normalized["api_base_url"],
-            api_key=normalized["api_key"],
-            api_model=normalized["api_model"],
-        )
-        # 不给它空目录——空目录会让它去找文件而不是读内联上下文。
-        # 指向整个仓库根，它才读得到 E 盘上的拆文库、技法样本这些真东西。
-        #
-        # ⚠️ 必须走 workspace_root()：`Path(__file__).resolve().parents[2]` 在源码里
-        # 是对的，但**打包后 `__file__` 在 bundle 内部**，会算成 `dist/Agentorium`——
-        # 于是 exe 里的 AI 读不到 CLAUDE.md 和技法样本十册，等于变瞎。
-        # core/paths.py 就是为这个写的，别再退回写死 parents[i]。
-        client.set_working_directory(workspace_root())
+        # 走哪个后端（本机 claude 命令 / 直连 API）由 core/engine.py 挑，
+        # 两个都实现同一套接口，这里不关心是哪个。
+        client = create_engine(normalized)
         self._client = client
         return client
 
