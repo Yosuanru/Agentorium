@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "entries": {
+    "canon/power/能力体系设定.md": {
+      "type": "ability",
+      "importance": "non_core"
+    },
+    "canon/power/空间体系设定.md": {
+      "type": "space",
+      "importance": "non_core"
+    }
+  }
+}
