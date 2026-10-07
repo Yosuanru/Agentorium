@@ -69,12 +69,23 @@ class WindowStateController(QObject):
     def activate_route(self, route: str) -> None:
         """Show a route and apply the corresponding shared shell state."""
         if route in self.WRITING_ROUTES:
-            self._focus_mode = False
-            self._set_focus_chrome(True)
+            # ⚠️ 这里**不能无条件把壳恢复**。
+            # 专注模式里翻章（上一章 / 下一章）走的是"打开文件 → 切写作台"，
+            # 那时候如果强行 `_focus_mode = False` + 恢复外壳，
+            # 就变成"点一下下一章就掉回列表"——专注模式被打断了。
+            # 所以：只有**本来就不在专注模式**时才恢复外壳。
+            if not self._focus_mode:
+                self._set_focus_chrome(True)
             # 写作台只列章节，故事资料只列资料——两页从此不一样。
             self.left_panel.set_scope("canon" if route == "canon" else "writing")
             self.page_stack.setCurrentWidget(self.writing_page)
         else:
+            # 去别的页（项目 / 分析 / 记忆 / 报告 / 导出）必须退出专注——
+            # 那些页本来就没有"专注"这回事。
+            # ⚠️ 走正规的 toggle，别只改 `_focus_mode`：边距和菜单上那句
+            # 「退出专注模式」得跟着一起复位，不然会留下一个对不上的按钮状态。
+            if self._focus_mode:
+                self.toggle_focus_mode()
             self.page_stack.setCurrentWidget(self.pages[route])
             self.action_bar.hide()
 
