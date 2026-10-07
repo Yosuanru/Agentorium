@@ -131,6 +131,11 @@ python main.py
 
 Windows 也可以双击 `run.bat`；要打包成 exe 见 `PACKAGING.md`。
 
+> ⚠️ **Windows 上如果敲 `python` 没反应、或弹出一句"去微软商店安装"**——
+> 那是系统的**"应用执行别名"占位程序**挡在前面，**不代表你没装 Python**。
+> 改用 **`py main.py`** 启动（`py` 是 Windows 自带的启动器）；双击 `run.bat` 也行，
+> 它会自己先试 `python`、不行再试 `py`。
+
 > **AI 怎么接？** 见第六节——**两条路**：
 > **直连 API**（只要地址和密钥，**什么都不用装**）或
 > **本机 claude 命令**（要装一次 Claude Code，功能最全）。
