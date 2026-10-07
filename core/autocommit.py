@@ -28,7 +28,16 @@ def commit_projects(repo_root: Path, message: str) -> bool:
     repo_root = Path(repo_root)
     if not (repo_root / ".git").exists():
         return False
-    target = "panel/projects"
+    # ⚠️ 别写死 `panel/projects`——那是"面板装在 <工作区>/panel/ 里"时的叫法。
+    # 别人把仓库单独拉下来跑时，书在仓库根的 `projects/` 下，
+    # 写死的话 `git status -- panel/projects` 一条都匹配不到，**退出提交静默失效**。
+    from core.paths import app_home
+    try:
+        target = (app_home() / "projects").relative_to(repo_root.resolve()).as_posix()
+    except ValueError:
+        return False                      # 项目不在这个仓库里，没得提交
+    if not target:
+        return False
     try:
         status = _git(repo_root, "status", "--porcelain", "--", target)
         if status.returncode != 0 or not status.stdout.strip():
