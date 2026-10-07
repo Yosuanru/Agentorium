@@ -7,3 +7,4 @@ dist/
 _build/
 *.egg-info/
 .env
+_scratch/
