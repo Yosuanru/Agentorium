@@ -32,5 +32,41 @@ class MainWindowDeleteBehaviorTests(unittest.TestCase):
         self.assertNotIn("trash", {route for route, _icon, _label in PrimaryNavigation.ROUTES})
 
 
+class MainWindowWiringTests(unittest.TestCase):
+    """**接线本身**也要有人看着——写错一个方法名，功能整个用不了，而且不报错。"""
+
+    def test_the_money_spending_entries_point_at_methods_that_exist(self) -> None:
+        """「花钱的动作」那几个入口，确认之后必须调到一个**真的存在**的方法。
+
+        踩过：`check_consistency()` 里写的是 `ai_workflow_controller.check_consistency`，
+        可控制器上那个方法叫 `check` —— 作者点「确认写入」那一下会 AttributeError，
+        **「检查设定」整个用不了**。一直没人发现，是因为 AI 功能没人实测过。
+
+        ⚠️ 这里是**静态读源码**，不起窗口——起窗口的测试在这套里会互相打架。
+        """
+        import ast
+        import inspect
+
+        from ui.ai_workflow_controller import AIWorkflowController
+
+        source = Path(inspect.getsourcefile(MainWindow)).read_text(encoding="utf-8")
+        available = {name for name in dir(AIWorkflowController) if not name.startswith("_")}
+
+        referenced: set[str] = set()
+        for node in ast.walk(ast.parse(source)):
+            if (
+                isinstance(node, ast.Attribute)
+                and isinstance(node.value, ast.Attribute)
+                and node.value.attr == "ai_workflow_controller"
+            ):
+                referenced.add(node.attr)
+
+        missing = sorted(referenced - available)
+        self.assertEqual(
+            missing, [],
+            "MainWindow 调了 AIWorkflowController 上不存在的方法：%s" % missing,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

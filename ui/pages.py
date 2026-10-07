@@ -888,8 +888,8 @@ class SettingsPage(QWidget):
         title = QLabel("设置")
         title.setObjectName("pageTitle")
         subtitle = QLabel(
-            "配置 Agentorium 本身和 AI 引擎。想接自己的 API，在下面「AI 引擎」里填地址和密钥——"
-            "只存本机，不进仓库；留空就用本机 claude 自己的登录。"
+            "配置 Agentorium 本身和 AI 引擎。想接自己的 API，在下面「AI 引擎」里"
+            "填地址和密钥——只存本机，不进仓库。"
         )
         subtitle.setWordWrap(True)
         subtitle.setObjectName("mutedLabel")
@@ -978,7 +978,7 @@ class SettingsPage(QWidget):
         )
         # —— 接自己的 API（三项都留空就还是走本机 claude 的登录）——
         self.api_base_url = QLineEdit()
-        self.api_base_url.setPlaceholderText("留空 = 用本机 claude 自己的登录")
+        self.api_base_url.setPlaceholderText("选「直连 API」时必填，例：https://api.deepseek.com/anthropic")
         self.api_base_url.setToolTip(
             "只要服务商提供 Anthropic 兼容接口就能接。例：\n"
             "  官方      https://api.anthropic.com\n"
@@ -986,7 +986,7 @@ class SettingsPage(QWidget):
         )
         self.api_key = QLineEdit()
         self.api_key.setEchoMode(QLineEdit.EchoMode.Password)
-        self.api_key.setPlaceholderText("留空 = 用本机 claude 自己的登录")
+        self.api_key.setPlaceholderText("选「直连 API」时必填；选「本机 claude 命令」可留空")
         self.api_key.setToolTip("只存在本机配置文件里，不进仓库。")
         self.api_model = QLineEdit()
         self.api_model.setPlaceholderText("例：deepseek-v4-flash")

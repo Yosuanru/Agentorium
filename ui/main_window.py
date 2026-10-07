@@ -523,18 +523,25 @@ class MainWindow(QMainWindow):
         if not icon_name:
             button.findChild(QLabel, "buttonIcon").hide()
         action = self.actions[key]
-        button.setToolTip(self.ACTION_HINTS.get(key) or action.text())
+        hint = self.ACTION_HINTS.get(key) or action.text()
+        button.setToolTip(hint)
         button.setEnabled(action.isEnabled())
         button.clicked.connect(action.trigger)
-        action.changed.connect(lambda item=action, target=button: self._sync_action_button(item, target))
+        # ⚠️ 把 hint 一起绑进去：`action.changed` 在 **setEnabled** 时也会发，
+        # 那时若拿 action.text() 回填 tooltip，就会把这句"干什么、要不要花钱"的
+        # 说明冲掉。按钮文字也不该跟着菜单的叫法变——构造时已经定好了。
+        action.changed.connect(
+            lambda item=action, target=button, tip=hint:
+                self._sync_action_button(item, target, tip))
         self._action_icon_buttons[key] = button
         return button
 
     @staticmethod
-    def _sync_action_button(action: QAction, button: IconTextButton) -> None:
+    def _sync_action_button(action: QAction, button: IconTextButton,
+                            hint: str = "") -> None:
         button.setEnabled(action.isEnabled())
-        button.setToolTip(action.text())
-        button.set_label(action.text())
+        if hint:
+            button.setToolTip(hint)
 
     def _build_menus(self) -> None:
         file_menu = self.menuBar().addMenu("文件")
@@ -1497,6 +1504,16 @@ class MainWindow(QMainWindow):
             "下面提到它们的地方，**找不到就跳过**：别照着清单一个个去找，**更别凭印象编**。\n"
             "你手上真正有的，是「当前作品」那一段里那个项目目录。")
 
+    def _chat_may_edit_files(self) -> bool:
+        """对话栏那个 AI 能不能**自己动手改文件**。
+
+        只有「本机 claude 命令」那条路能——它是个 agent，带工具。
+        「直连 API」那条路只有一问一答，**没有工具调用**；跟它说"你可以直接改文件"，
+        它会真的去改、然后发现改不了，作者看到的就是一段空话。
+        """
+        from core.engine import ENGINE_CLI, engine_kind
+        return engine_kind(self.config) == ENGINE_CLI
+
     def _read_kernel(self) -> str:
         try:
             md = (self._workspace_root() / "CLAUDE.md").read_text(encoding="utf-8")
@@ -1518,10 +1535,13 @@ class MainWindow(QMainWindow):
             "- 像人一样说。**不要动不动列 bullet、不要写小标题、不要「首先其次最后」。**\n"
             "- 作者问什么答什么，不铺垫、不总结、不客套。\n"
             "- 要改稿就**直接给改后的正文**：把改后的完整正文放进一个 ```正文 块里。\n"
-            "  **作者已放权：你可以直接改文件。** 但两条底线——\n"
-            "  ① 改之前先看清要动哪儿，改完在对话里说清你动了什么；\n"
-            "  ② 一次只做一件事，别一口气改一大片（他才退得回来）。\n"
-            "  想让他先过目也行：把改后的正文放进「正文」块，他会看到「应用到正文」按钮。\n"
+            + ("  **作者已放权：你可以直接改文件。** 但两条底线——\n"
+               "  ① 改之前先看清要动哪儿，改完在对话里说清你动了什么；\n"
+               "  ② 一次只做一件事，别一口气改一大片（他才退得回来）。\n"
+               if self._chat_may_edit_files() else
+               "  ⚠️ **你手上没有工具、改不了文件**——所以必须把改后的正文"
+               "放进 ```正文 块，由作者点「应用到正文」写进去。\n")
+            + "  想让他先过目也行：把改后的正文放进「正文」块，他会看到「应用到正文」按钮。\n"
             "  块外面用一两句说你动了哪儿。**别只讲思路、别让作者自己复制粘贴。**",
 
             self._workspace_caveat(),
@@ -2392,7 +2412,10 @@ class MainWindow(QMainWindow):
             "AI 会把当前章的正文，跟「故事资料」里的角色卡、世界观、体系设定比一遍，\n"
             "把对不上的地方列出来（人物记错事、用了没解锁的能力、前后时间对不上……）。\n\n"
             "**会花钱。**",
-            self.ai_workflow_controller.check_consistency)
+            # ⚠️ 方法名是 `check`，不是 `check_consistency`——写成后者的话，
+            # 作者点「确认写入」那一下会 AttributeError，**「检查设定」整个用不了**。
+            # （这个错一直没被发现，是因为 AI 功能没人实测过。）
+            self.ai_workflow_controller.check)
 
     def refresh_everything(self) -> None:
         """把项目文件重读一遍：拆完书 / 同步完 / 在别处改了文件之后点这个。
