@@ -1,4 +1,4 @@
-"""Prompt builders for the task-oriented dsh writing features."""
+"""Prompt builders for the task-oriented AI writing features."""
 
 from __future__ import annotations
 

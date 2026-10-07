@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (QComboBox, QFileDialog, QHBoxLayout, QLabel,
 from core import ingest
 from core.books import Book, discover_books
 from core.paths import workspace_root
-from ui.ai_task_runner import DSHTask
+from ui.ai_task_runner import AITask
 
 WORKSPACE = workspace_root()          # 打包后也找得对，见 core/paths.py
 
@@ -290,7 +290,7 @@ class WorkspacePage(QWidget):
             return
         src = Path(path)
         self._busy(True, "正在本地切章…（不调模型，不花钱）")
-        task = DSHTask(lambda cancel: ingest.scan(src), parent=self)
+        task = AITask(lambda cancel: ingest.scan(src), parent=self)
         task.success.connect(self._import_done)
         task.failed.connect(self._failed)
         self._task = task

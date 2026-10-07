@@ -12,13 +12,25 @@ from .app_paths import app_config_dir, legacy_application_root, update_cache_dir
 from .theme_tokens import DARK_COLORS, LIGHT_COLORS
 from .storage import atomic_write_text
 
+# 上游那几个键叫 dsh_*（它跑的是另一个引擎）。这里改成 ai_*；
+# 旧配置由 `_LEGACY_KEY_RENAMES` 自动搬过来，作者不用手动改文件。
+_LEGACY_KEY_RENAMES = (
+    ("dsh_command", "ai_command"),
+    ("dsh_launcher_args", "ai_launcher_args"),
+    ("dsh_profile", "ai_profile"),
+    ("dsh_timeout", "ai_timeout"),
+    ("dsh_extra_args", "ai_extra_args"),
+)
+
+
 DEFAULT_CONFIG = {
-    # 键名沿用 dsh_*（不动设置界面与旧配置），值换成本机的 claude。
-    "dsh_command": "claude",
-    "dsh_launcher_args": [],
-    "dsh_profile": "headless",
-    "dsh_timeout": 600,
-    "dsh_extra_args": [],
+    # ⚠️ 键名历史上叫 `dsh_*`，一直没改——改名要迁移所有人的旧配置，
+    # 不值当。**值**才是引擎本身：现在是本机的 `claude` 命令。
+    "ai_command": "claude",
+    "ai_launcher_args": [],
+    "ai_profile": "headless",
+    "ai_timeout": 600,
+    "ai_extra_args": [],
     # 面板自己接的 API：填了就递给 claude 子进程（跟 CC Switch 一个做法）。
     # ⚠️ 三项全留空 = 一个都不覆盖，照旧用本机 claude 自己的登录。
     "api_base_url": "",
@@ -145,17 +157,21 @@ def _normalize_config(config: dict[str, Any]) -> None:
             if not isinstance(candidate, str) or not _is_hex_color(candidate):
                 config[key] = value
 
-    config["dsh_command"] = str(config.get("dsh_command") or "claude").strip()
-    config["dsh_profile"] = "headless"
+    # ⚠️ 旧键名 dsh_* → ai_*：读到就搬，别让升级前的配置失效。
+    for _old, _new in _LEGACY_KEY_RENAMES:
+        if _old in config and not config.get(_new):
+            config[_new] = config[_old]
+    config["ai_command"] = str(config.get("ai_command") or "claude").strip()
+    config["ai_profile"] = "headless"
     # 「面板自己接的 API」三项：一律去空白。留空就是"不用它"。
     for _key in ("api_base_url", "api_key", "api_model"):
         config[_key] = str(config.get(_key) or "").strip()
-    config["dsh_launcher_args"] = _string_list(config.get("dsh_launcher_args"))
-    config["dsh_extra_args"] = _string_list(config.get("dsh_extra_args"))
+    config["ai_launcher_args"] = _string_list(config.get("ai_launcher_args"))
+    config["ai_extra_args"] = _string_list(config.get("ai_extra_args"))
     try:
-        config["dsh_timeout"] = max(30, min(1800, int(config.get("dsh_timeout", 600))))
+        config["ai_timeout"] = max(30, min(1800, int(config.get("ai_timeout", 600))))
     except (TypeError, ValueError):
-        config["dsh_timeout"] = 600
+        config["ai_timeout"] = 600
     try:
         config["ui_font_size"] = max(10, min(22, int(config.get("ui_font_size", 14))))
     except (TypeError, ValueError):

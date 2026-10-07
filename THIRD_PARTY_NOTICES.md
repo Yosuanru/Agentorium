@@ -33,16 +33,6 @@ license texts and notices alongside the application.
 The packaged license texts are available under `licenses/third-party/`:
 `GNU-LGPL-3.0.txt` and `GNU-GPL-3.0.txt`.
 
-## DeepSeek Harness (optional external tool)
-
-- Copyright © 2026 DeepSeek.
-- License: MIT License.
-- Official project: <https://github.com/deepseek-ai/deepseek-harness>
-
-DeepSeek Harness is not bundled with or redistributed by this repository.
-Novalist can invoke a separately installed `dsh` command when the user enables
-AI-assisted features.
-
 ## Bundled Stitch typography assets
 
 The native interface bundles the local font files under `assets/fonts/` for

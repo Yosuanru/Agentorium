@@ -6,7 +6,7 @@ from core import expansion
 from core.project import NovelProject
 
 
-class FakeDSH:
+class FakeEngine:
     def __init__(self, outputs, json_outputs=None):
         self.outputs = list(outputs)
         self.calls: list[dict] = []
@@ -45,50 +45,50 @@ class ExpansionTests(TestCase):
         self.onboarding_output = "我已就绪。当前会话环境已加载，项目现有结构完好，请问这次需要我做什么？"
 
     def test_valid_first_output_returns_without_retry(self) -> None:
-        dsh = FakeDSH([self.valid_output])
-        raw, first_raw = expansion.run_expansion(self.project, "chapter_01", dsh, target_chars=300)
+        engine = FakeEngine([self.valid_output])
+        raw, first_raw = expansion.run_expansion(self.project, "chapter_01", engine, target_chars=300)
         self.assertEqual(
             expansion.ai_protocol.parse_expansion(raw, min_chars=1).text,
             "字" * 300,
         )
         self.assertIsNone(first_raw)
-        self.assertEqual(len(dsh.calls), 1)
+        self.assertEqual(len(engine.calls), 1)
 
     def test_retry_keeps_full_timeout_budget(self) -> None:
-        dsh = FakeDSH([self.onboarding_output, self.valid_output])
+        engine = FakeEngine([self.onboarding_output, self.valid_output])
         with patch(
             "core.expansion.build_ai_context",
             wraps=expansion.build_ai_context,
         ) as build_context:
             raw, first_raw = expansion.run_expansion(
-                self.project, "chapter_01", dsh, target_chars=300
+                self.project, "chapter_01", engine, target_chars=300
             )
         self.assertEqual(
             expansion.ai_protocol.parse_expansion(raw, min_chars=1).text,
             "字" * 300,
         )
         self.assertEqual(first_raw, self.onboarding_output)
-        self.assertEqual(len(dsh.calls), 2)
-        self.assertIn("纠偏重试", dsh.calls[1]["system"])
+        self.assertEqual(len(engine.calls), 2)
+        self.assertIn("纠偏重试", engine.calls[1]["system"])
         # Regression: the retry regenerates the whole chapter and must not run
         # under a shortened timeout budget.
-        self.assertIsNone(dsh.calls[1]["timeout_override"])
+        self.assertIsNone(engine.calls[1]["timeout_override"])
         self.assertEqual(build_context.call_count, 1)
 
     def test_history_window_is_forwarded_to_prompt_and_retry(self) -> None:
-        dsh = FakeDSH([self.onboarding_output, self.valid_output])
+        engine = FakeEngine([self.onboarding_output, self.valid_output])
         expansion.run_expansion(
             self.project,
             "chapter_01",
-            dsh,
+            engine,
             target_chars=300,
             history_chapters=7,
         )
-        self.assertIn("最多最近 7 个已完成章节的摘要", dsh.calls[0]["user"])
-        self.assertIn("最多最近 7 个已完成章节的摘要", dsh.calls[1]["user"])
+        self.assertIn("最多最近 7 个已完成章节的摘要", engine.calls[0]["user"])
+        self.assertIn("最多最近 7 个已完成章节的摘要", engine.calls[1]["user"])
 
     def test_selected_foreshadowing_is_forwarded_to_prompt_and_retry(self) -> None:
-        dsh = FakeDSH([self.onboarding_output, self.valid_output])
+        engine = FakeEngine([self.onboarding_output, self.valid_output])
         selected = [
             {
                 "id": "f-selected",
@@ -102,15 +102,15 @@ class ExpansionTests(TestCase):
         expansion.run_expansion(
             self.project,
             "chapter_01",
-            dsh,
+            engine,
             target_chars=300,
             selected_foreshadowing=selected,
         )
-        for call in dsh.calls:
+        for call in engine.calls:
             self.assertIn("残缺古剑的来历", call["user"])
             self.assertIn("本次重点关注的伏笔", call["user"])
-        self.assertEqual(len(dsh.json_calls), 1)
-        self.assertIn("foreshadowing_review", dsh.json_calls[0]["system"])
+        self.assertEqual(len(engine.json_calls), 1)
+        self.assertIn("foreshadowing_review", engine.json_calls[0]["system"])
 
     def test_selected_foreshadowing_is_reviewed_after_generation(self) -> None:
         selected = [
@@ -121,7 +121,7 @@ class ExpansionTests(TestCase):
                 "status": "open",
             }
         ]
-        dsh = FakeDSH(
+        engine = FakeEngine(
             [self.valid_output],
             json_outputs=[
                 {
@@ -140,7 +140,7 @@ class ExpansionTests(TestCase):
         raw, first_raw = expansion.run_expansion(
             self.project,
             "chapter_01",
-            dsh,
+            engine,
             target_chars=300,
             selected_foreshadowing=selected,
         )
@@ -160,12 +160,12 @@ class ExpansionTests(TestCase):
 
     def test_foreshadowing_review_failure_keeps_generated_prose(self) -> None:
         selected = [{"id": "f-selected", "title": "古剑来历", "status": "open"}]
-        dsh = FakeDSH([self.valid_output], json_outputs=[RuntimeError("复核失败")])
+        engine = FakeEngine([self.valid_output], json_outputs=[RuntimeError("复核失败")])
 
         raw, _first_raw = expansion.run_expansion(
             self.project,
             "chapter_01",
-            dsh,
+            engine,
             target_chars=300,
             selected_foreshadowing=selected,
         )
@@ -183,7 +183,7 @@ class ExpansionTests(TestCase):
         cleaned_text = "青" * 299 + "。"
         malformed = "<NOVEL_TEXT>\n" + cleaned_text + "\n</AGENTORIUM_TASK_DONE>"
         selected = [{"id": "f-selected", "title": "古剑来历", "status": "open"}]
-        dsh = FakeDSH(
+        engine = FakeEngine(
             [malformed],
             json_outputs=[
                 {
@@ -202,7 +202,7 @@ class ExpansionTests(TestCase):
         raw, first_raw = expansion.run_expansion(
             self.project,
             "chapter_01",
-            dsh,
+            engine,
             target_chars=300,
             selected_foreshadowing=selected,
         )
@@ -224,13 +224,13 @@ class ExpansionTests(TestCase):
         power_path = self.project.canon_dir / "power" / "战力体系.md"
         if not power_path.exists():
             self.skipTest("演示项目没有能力体系样本")
-        dsh = FakeDSH([self.valid_output])
+        engine = FakeEngine([self.valid_output])
         expansion.run_expansion(
             self.project,
             "chapter_01",
-            dsh,
+            engine,
             target_chars=300,
             selected_power=[power_path],
         )
-        self.assertIn("【本次重点体系设定】", dsh.calls[0]["user"])
-        self.assertIn("【常驻核心规则】", dsh.calls[0]["user"])
+        self.assertIn("【本次重点体系设定】", engine.calls[0]["user"])
+        self.assertIn("【常驻核心规则】", engine.calls[0]["user"])

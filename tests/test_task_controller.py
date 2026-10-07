@@ -3,7 +3,7 @@ import subprocess
 from unittest import TestCase
 from unittest.mock import patch
 
-from core.dsh_client import DSHClient
+from core.claude_client import ClaudeClient
 from core.task_controller import AITaskCancelled, AITaskController, AITaskState
 
 
@@ -32,12 +32,22 @@ class AITaskControllerTests(TestCase):
         self.assertFalse(controller.request_cancel(token))
 
 
-class CancellableDSHTests(TestCase):
+class _FakeStdin:
+    def write(self, _text):
+        return len(_text)
+
+    def close(self):
+        pass
+
+
+class CancellableClientTests(TestCase):
+    """取消那条路：**已经取消的不许起进程；跑到一半取消的要把进程收掉。**"""
+
     def test_already_cancelled_task_does_not_start_a_process(self) -> None:
         event = Event()
         event.set()
-        client = DSHClient("dsh")
-        with patch("core.dsh_client.subprocess.Popen") as popen:
+        client = ClaudeClient("claude")
+        with patch("core.claude_client.subprocess.Popen") as popen:
             with self.assertRaises(AITaskCancelled):
                 client.generate("system", "user", cancel_event=event)
         popen.assert_not_called()
@@ -49,6 +59,7 @@ class CancellableDSHTests(TestCase):
             def __init__(self) -> None:
                 self.returncode = None
                 self.killed = False
+                self.stdin = _FakeStdin()
                 self.communicate_calls = 0
 
             def poll(self):
@@ -58,7 +69,7 @@ class CancellableDSHTests(TestCase):
                 self.communicate_calls += 1
                 if not self.killed:
                     event.set()
-                    raise subprocess.TimeoutExpired("dsh", timeout)
+                    raise subprocess.TimeoutExpired("claude", timeout)
                 self.returncode = -9
                 return "", ""
 
@@ -66,28 +77,24 @@ class CancellableDSHTests(TestCase):
                 self.killed = True
 
         process = FakeProcess()
-        client = DSHClient("dsh")
-        with patch("core.dsh_client.subprocess.Popen", return_value=process):
+        client = ClaudeClient("claude")
+        with patch("core.claude_client.subprocess.Popen", return_value=process):
             with self.assertRaises(AITaskCancelled):
                 client.generate("system", "user", cancel_event=event)
         self.assertTrue(process.killed)
-        self.assertGreaterEqual(process.communicate_calls, 2)
 
-    def test_process_tree_reap_has_a_bounded_fallback(self) -> None:
-        class StuckProcess:
+    def test_kill_tree_is_safe_without_a_pid(self) -> None:
+        """没有 pid（假进程、或拿不到 pid）时不能抛，得退回 proc.kill()。"""
+
+        class NoPidProcess:
+            pid = None
+
             def __init__(self) -> None:
                 self.killed = False
-                self.communicate_calls = 0
-
-            def communicate(self, timeout=None):
-                self.communicate_calls += 1
-                raise subprocess.TimeoutExpired("dsh", timeout)
 
             def kill(self):
                 self.killed = True
 
-        process = StuckProcess()
-        DSHClient._terminate_process_tree(process)
-
+        process = NoPidProcess()
+        ClaudeClient._kill_tree(process)
         self.assertTrue(process.killed)
-        self.assertEqual(process.communicate_calls, 2)

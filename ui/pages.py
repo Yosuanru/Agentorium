@@ -864,7 +864,7 @@ class ExportPage(QWidget):
 
 
 class SettingsPage(QWidget):
-    """Application settings with one explicit DeepSeek Harness integration."""
+    """Application settings, including how the AI engine is reached."""
 
     save_requested = Signal(object)
     test_requested = Signal(object)
@@ -1079,12 +1079,12 @@ class SettingsPage(QWidget):
         self.api_base_url.setText(str(config.get("api_base_url") or ""))
         self.api_key.setText(str(config.get("api_key") or ""))
         self.api_model.setText(str(config.get("api_model") or ""))
-        self.command.setText(str(config.get("dsh_command", "claude")))
+        self.command.setText(str(config.get("ai_command", "claude")))
         # 用空格拼、不用 shlex.join：join 是 posix 模式，会给带反斜杠的
         # Windows 路径加引号并转义，跟上面 posix=False 的解析对不上。
-        self.launcher_args.setText(" ".join(config.get("dsh_launcher_args") or []))
-        self.extra_args.setText(" ".join(config.get("dsh_extra_args") or []))
-        self.timeout.setValue(int(config.get("dsh_timeout", 600)))
+        self.launcher_args.setText(" ".join(config.get("ai_launcher_args") or []))
+        self.extra_args.setText(" ".join(config.get("ai_extra_args") or []))
+        self.timeout.setValue(int(config.get("ai_timeout", 600)))
         self.theme.setCurrentIndex(0 if config.get("theme", "light") == "light" else 1)
         self.ui_font_size.setValue(int(config.get("ui_font_size", 14)))
         self.auto_save_interval.setEnabled(self.auto_save.isChecked())
@@ -1106,14 +1106,14 @@ class SettingsPage(QWidget):
                 "editor_font_size": self.editor_font_size.value(),
                 "expand_target_chars": self.expand_target_chars.value(),
                 "ai_context_history_chapters": self.ai_context_history_chapters.value(),
-                "dsh_command": self.command.text().strip() or "claude",
-                "dsh_launcher_args": launcher_args,
-                "dsh_profile": "headless",
-                "dsh_extra_args": extra_args,
+                "ai_command": self.command.text().strip() or "claude",
+                "ai_launcher_args": launcher_args,
+                "ai_profile": "headless",
+                "ai_extra_args": extra_args,
                 "api_base_url": self.api_base_url.text().strip(),
                 "api_key": self.api_key.text().strip(),
                 "api_model": self.api_model.text().strip(),
-                "dsh_timeout": self.timeout.value(),
+                "ai_timeout": self.timeout.value(),
                 "theme": self.theme.currentData(),
                 "ui_font_size": self.ui_font_size.value(),
             }

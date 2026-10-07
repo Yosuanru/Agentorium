@@ -7,7 +7,7 @@ import threading
 
 from . import ai_protocol
 from .context_budget import EXPANSION_SUMMARY_COUNT, build_ai_context
-from .dsh_client import DSHClient
+from .claude_client import ClaudeClient
 from .project import NovelProject
 from .prompt_builder import (
     build_expansion_prompt,
@@ -20,7 +20,7 @@ from .task_controller import AITaskCancelled
 def run_expansion(
     project: NovelProject,
     chapter_id: str,
-    dsh: DSHClient,
+    client: ClaudeClient,
     target_chars: int = 2000,
     history_chapters: int = EXPANSION_SUMMARY_COUNT,
     selected_foreshadowing: list[dict] | tuple[dict, ...] | None = None,
@@ -57,7 +57,7 @@ def run_expansion(
         context=context,
     )
     generate_options = {"cancel_event": cancel_event} if cancel_event is not None else {}
-    raw = dsh.generate(system_prompt, user_prompt, **generate_options)
+    raw = client.generate(system_prompt, user_prompt, **generate_options)
     first_raw: str | None = None
     try:
         parsed = ai_protocol.parse_expansion(
@@ -84,7 +84,7 @@ def run_expansion(
         )
         # The retry regenerates the full chapter, so it keeps the same timeout
         # budget as the first attempt instead of a shortened one.
-        raw = dsh.generate(retry_system, retry_user, **generate_options)
+        raw = client.generate(retry_system, retry_user, **generate_options)
         try:
             parsed = ai_protocol.parse_expansion(
                 raw,
@@ -104,7 +104,7 @@ def run_expansion(
             parsed,
             chapter_id,
             selected,
-            dsh,
+            client,
             generate_options,
         )
     else:
@@ -116,7 +116,7 @@ def _attach_foreshadowing_review(
     parsed: ai_protocol.ExpansionResult,
     chapter_id: str,
     selected_foreshadowing: tuple[dict, ...],
-    dsh: DSHClient,
+    client: ClaudeClient,
     generate_options: dict,
 ) -> str:
     """Append a normalized advisory block; review failure keeps prose usable."""
@@ -126,7 +126,7 @@ def _attach_foreshadowing_review(
         selected_foreshadowing,
     )
     try:
-        review = dsh.generate_json(system_prompt, user_prompt, **generate_options)
+        review = client.generate_json(system_prompt, user_prompt, **generate_options)
     except AITaskCancelled:
         raise
     except Exception:

@@ -40,13 +40,13 @@ class AIEngineControllerTests(unittest.TestCase):
     def test_running_task_defers_old_client_cleanup(self) -> None:
         running = [False]
         with patch("ui.ai_engine_controller.ClaudeClient", FakeClaudeClient):
-            controller = AIEngineController({"dsh_command": "claude"}, lambda: running[0])
+            controller = AIEngineController({"ai_command": "claude"}, lambda: running[0])
             first = controller.client
             self.assertIsNotNone(first)
             self.assertIsNotNone(first.working_directory)
 
             running[0] = True
-            second = controller.configure({"dsh_command": "claude-new"})
+            second = controller.configure({"ai_command": "claude-new"})
 
             self.assertIsNot(first, second)
             self.assertFalse(first.cleaned)
@@ -60,7 +60,7 @@ class AIEngineControllerTests(unittest.TestCase):
 
     def test_idle_reconfiguration_cleans_old_client_immediately(self) -> None:
         with patch("ui.ai_engine_controller.ClaudeClient", FakeClaudeClient):
-            controller = AIEngineController({"dsh_command": "claude"}, lambda: False)
+            controller = AIEngineController({"ai_command": "claude"}, lambda: False)
             first = controller.client
-            controller.configure({"dsh_command": "claude-new"})
+            controller.configure({"ai_command": "claude-new"})
             self.assertTrue(first.cleaned)

@@ -1,6 +1,6 @@
 """Priority-based context budget for AI prompts.
 
-**来历（2026-10-03 改）**：这套预算原本是给 `dsh` 兜底的 —— 那个 CLI 只收
+**来历（2026-10-03 改）**：这套预算原本是给旧的命令行引擎兜底的 —— 那个 CLI 只收
 命令行参数，整个提示词必须塞进 Windows ~30K 的 CreateProcess 上限里，所以
 所有上下文都被狠狠压缩，越不重要的越先砍。
 
@@ -26,7 +26,7 @@ from .project import NovelProject, chapter_number_from_id
 from .project_data import ProjectDataStore
 
 # Sections share this pool; instruction text and section labels live outside it.
-# 24000 是 dsh 时代为 30K 命令行上限留的余量。走 stdin 之后没必要卡这么死，
+# 24000 是那个年代为 30K 命令行上限留的余量。走 stdin 之后没必要卡这么死，
 # 放到 96000（约合四万多 token）——再大就只剩稀释，没有增益。
 DEFAULT_PROMPT_BUDGET = 96000
 
@@ -421,9 +421,16 @@ def prior_chapter_summaries(
 
 
 def _trim(text: str, allowance: int, keep: str) -> str:
+    # ⚠️ 这里必须给个地板。`allowance` 比那句截断标记还短时，
+    # `allowance - len(mark)` 是负数——`text[-(-n):]` 会变成 `text[n:]`，
+    # 也就是**把开头砍掉、长度反而超过预算**（allowance ≤ 0 时直接返回全文）。
+    # 现在调用方最低也会给到 MIN_SECTION_CHARS，摸不到；但别留这个雷。
+    tail_mark, head_mark = TAIL_MARK, HEAD_MARK
     if keep == "tail":
-        return TAIL_MARK + text[-(allowance - len(TAIL_MARK)) :]
-    return text[: allowance - len(HEAD_MARK)] + HEAD_MARK
+        room = max(1, allowance - len(tail_mark))
+        return tail_mark + text[-room:]
+    room = max(1, allowance - len(head_mark))
+    return text[:room] + head_mark
 
 
 def _cap_value(value: object, cap: int, max_items: int) -> object:

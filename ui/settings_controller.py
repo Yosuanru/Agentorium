@@ -1,4 +1,4 @@
-"""Application settings, theme and DSH connection-test coordination."""
+"""Application settings, theme and AI-engine connection-test coordination."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QApplication
 from core.config import normalize_config, save_config
 from core.claude_client import ClaudeClient
 from core.paths import workspace_root
-from ui.ai_task_runner import DSHTask
+from ui.ai_task_runner import AITask
 from ui.ai_engine_controller import AIEngineController
 from ui.document_controller import DocumentController
 from ui.theme import apply_theme
@@ -35,7 +35,7 @@ class SettingsController(QObject):
         self._config = normalize_config(config)
         self._document_controller = document_controller
         self._engine_controller = engine_controller
-        self._connection_task: DSHTask | None = None
+        self._connection_task: AITask | None = None
         self._apply_runtime_settings()
 
     @property
@@ -60,7 +60,7 @@ class SettingsController(QObject):
         updated.update(DARK_COLORS if next_theme == "dark" else LIGHT_COLORS)
         return self.apply(updated, message="主题已切换")
 
-    def test_dsh(self, config: dict | None = None) -> bool:
+    def test_engine(self, config: dict | None = None) -> bool:
         if self._connection_task is not None and self._connection_task.isRunning():
             return False
         test_config = normalize_config(config or self._config)
@@ -68,10 +68,10 @@ class SettingsController(QObject):
         # `--profile headless`，而 claude CLI 没这个参数，于是「测试连接」**必然失败**，
         # 作者以为 AI 坏了，其实真实任务走的是 ClaudeClient、好好的。
         client = ClaudeClient(
-            command=test_config["dsh_command"],
-            launcher_args=test_config["dsh_launcher_args"],
-            timeout=min(15, int(test_config["dsh_timeout"])),
-            extra_args=test_config["dsh_extra_args"],
+            command=test_config["ai_command"],
+            launcher_args=test_config["ai_launcher_args"],
+            timeout=min(15, int(test_config["ai_timeout"])),
+            extra_args=test_config["ai_extra_args"],
             # 「测试能不能连上」要拿**正在编辑的那份**去试——不然改了地址/密钥，
             # 点测试还是拿旧的连，看起来像"没生效"。
             api_base_url=test_config["api_base_url"],
@@ -79,7 +79,7 @@ class SettingsController(QObject):
             api_model=test_config["api_model"],
         )
         client.set_working_directory(workspace_root())
-        self._connection_task = DSHTask(
+        self._connection_task = AITask(
             lambda _cancel_event: client.generate("你是连通性自检。只回两个字：可以。", "在吗"),
             parent=self,
         )

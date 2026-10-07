@@ -7,7 +7,7 @@ from .project_data import ProjectDataStore
 
 
 def merge_story_state(old_state: dict, new_state: dict) -> dict:
-    """Merge dsh-generated state into the existing state.
+    """Merge AI-generated state into the existing state.
 
     We keep all old character keys and overlay the updated fields, so a model
     omission does not erase existing data.

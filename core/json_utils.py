@@ -1,4 +1,4 @@
-"""Shared tolerant JSON extraction for DSh text responses."""
+"""Shared tolerant JSON extraction for AI text responses."""
 
 from __future__ import annotations
 

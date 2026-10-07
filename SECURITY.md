@@ -13,5 +13,6 @@ safe mitigation you have identified.
 ## Supported version
 
 Security fixes are applied to the latest revision on the default branch. Users
-should also keep Python, PySide6 and DeepSeek Harness updated after checking
-compatibility with their environment.
+should also keep Python, PySide6 and the Claude Code CLI installed by this
+project's documentation updated, after checking compatibility with their
+environment.

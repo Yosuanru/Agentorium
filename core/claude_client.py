@@ -202,6 +202,11 @@ class ClaudeClient:
         return self._clean(stdout)
 
     def _run_cancellable(self, cmd, run_args, limit, cancel_event, stdin_text: str):
+        # ⚠️ **先看一眼再起进程。** 任务已经取消的话，不该再去 spawn 一个 claude
+        # ——白起一次、白烧一次调用。原来的实现是第一件事就 Popen，
+        # 把"取消了的任务不启动"这条保证丢了。
+        if cancel_event.is_set():
+            raise AITaskCancelled()
         args = dict(run_args)
         # Popen 不认 run() 的这两个参数，必须摘掉再补上管道。
         args.pop("input", None)

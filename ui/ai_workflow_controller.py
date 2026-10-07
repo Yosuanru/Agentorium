@@ -165,8 +165,8 @@ class AIWorkflowController(QObject):
             return
         if not self._ensure_ai_notice() or not self._save_dirty_document():
             return
-        dsh = self.ai_engine_controller.client
-        if dsh is None:
+        client = self.ai_engine_controller.client
+        if client is None:
             QMessageBox.warning(
                 self.parent,
                 "AI 未就绪",
@@ -179,7 +179,7 @@ class AIWorkflowController(QObject):
             QMessageBox.warning(self.parent, "读取章节失败", str(exc))
             return
         title = chapter.title or chapter_id
-        workflow = AIWorkflowService(dsh)
+        workflow = AIWorkflowService(client)
         self._start(
             "check",
             chapter_id,
@@ -286,11 +286,11 @@ class AIWorkflowController(QObject):
             "start": resolution.start,
             "end": resolution.end,
         }
-        dsh = self.ai_engine_controller.client
-        if dsh is None:
+        client = self.ai_engine_controller.client
+        if client is None:
             QMessageBox.warning(self.parent, "AI 未就绪", "当前没有可用的 AI 客户端，请先检查设置。")
             return
-        workflow = AIWorkflowService(dsh)
+        workflow = AIWorkflowService(client)
         self._start(
             "repair",
             chapter_id,
@@ -328,15 +328,15 @@ class AIWorkflowController(QObject):
                 return None
         if not self._ensure_ai_notice() or not self._save_current_file():
             return None
-        dsh = self.ai_engine_controller.client
-        if dsh is None:
+        client = self.ai_engine_controller.client
+        if client is None:
             QMessageBox.warning(
                 self.parent,
                 "AI 未就绪",
                 "当前没有可用的 AI 客户端，请先检查设置。",
             )
             return None
-        return project, chapter_id, AIWorkflowService(dsh)
+        return project, chapter_id, AIWorkflowService(client)
 
     def _save_current_file(self) -> bool:
         if not self.editor.current_path():

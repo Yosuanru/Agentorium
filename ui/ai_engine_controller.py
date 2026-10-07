@@ -1,7 +1,7 @@
 """Lifecycle management for the configured AI engine client.
 
 本项目把引擎从 `dsh` 换成了本机的 `claude`（见 `core/claude_client.py`）。
-配置里的键名仍沿用 `dsh_*`，避免改动设置界面与旧配置——值默认已是 `claude`。
+配置键名历史上是 `dsh_*`，现在叫 `ai_*`（旧键由 core/config.py 自动搬过来）。
 """
 
 from __future__ import annotations
@@ -45,10 +45,10 @@ class AIEngineController(QObject):
                 previous.cleanup()
 
         client = ClaudeClient(
-            command=normalized["dsh_command"],
-            launcher_args=normalized["dsh_launcher_args"],
-            timeout=normalized["dsh_timeout"],
-            extra_args=normalized["dsh_extra_args"],
+            command=normalized["ai_command"],
+            launcher_args=normalized["ai_launcher_args"],
+            timeout=normalized["ai_timeout"],
+            extra_args=normalized["ai_extra_args"],
             api_base_url=normalized["api_base_url"],
             api_key=normalized["api_key"],
             api_model=normalized["api_model"],

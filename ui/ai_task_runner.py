@@ -10,7 +10,7 @@ from PySide6.QtCore import QObject, QThread, Signal
 from core.task_controller import AITaskCancelled, AITaskController, AITaskToken
 
 
-class DSHTask(QThread):
+class AITask(QThread):
     """Run one blocking callable away from the writing interface."""
 
     success = Signal(object)
@@ -48,7 +48,7 @@ class AITaskRunner(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.controller = AITaskController()
-        self._thread: DSHTask | None = None
+        self._thread: AITask | None = None
         self._token: AITaskToken | None = None
 
     @property
@@ -63,7 +63,7 @@ class AITaskRunner(QObject):
         if token is None:
             return None
         self._token = token
-        self._thread = DSHTask(worker, token.cancel_event, self)
+        self._thread = AITask(worker, token.cancel_event, self)
         self._thread.success.connect(self._on_success)
         self._thread.failed.connect(self._on_failed)
         self._thread.cancelled.connect(self._on_cancelled)

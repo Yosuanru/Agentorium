@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QPlainTextEdit,
 
 from core import voice
 from core.text_stats import body_char_count
-from ui.ai_task_runner import DSHTask
+from ui.ai_task_runner import AITask
 from ui.theme import chat_css
 
 # AI 要给"改后的正文"时，按约定装进 ```正文 … ``` 块。
@@ -178,7 +178,7 @@ class ChatPanel(QWidget):
         self.mic_btn.setEnabled(False)
         self.mic_btn.setText("听…")
         self.status.setText("在听——说完停两秒")
-        task = DSHTask(lambda cancel: voice.listen(10), parent=self)
+        task = AITask(lambda cancel: voice.listen(10), parent=self)
         task.success.connect(self._voice_done)
         task.failed.connect(self._voice_failed)
         # 不接 finished 的话，每点一次「说」就在面板下挂一个走不掉的线程对象。

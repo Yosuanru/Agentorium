@@ -1,6 +1,6 @@
-"""Validation helpers for structured DSh task results.
+"""Validation helpers for structured AI task results.
 
-The headless Harness returns assistant text on stdout.  These helpers turn
+The headless AI engine returns assistant text on stdout.  These helpers turn
 that text into task-specific results before the UI is allowed to write it to
 the project.
 """
@@ -15,7 +15,7 @@ from .json_utils import JSONExtractionError, extract_json
 
 
 class AIProtocolError(ValueError):
-    """Raised when a DSh response does not match the requested task."""
+    """Raised when an AI response does not match the requested task."""
 
 
 # These values are part of the machine-readable contract.  Keep them stable

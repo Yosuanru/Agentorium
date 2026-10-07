@@ -14,7 +14,7 @@ class FakeDocumentController:
         self.auto_save_calls.append((enabled, interval))
 
 
-class FakeDSHTask(QObject):
+class FakeAITask(QObject):
     success = Signal(object)
     failed = Signal(str)
     finished = Signal()
@@ -95,7 +95,7 @@ class SettingsControllerTests(unittest.TestCase):
         )
         save_config.assert_not_called()
 
-    def test_dsh_test_task_is_exposed_through_controller_signals(self) -> None:
+    def test_engine_test_task_is_exposed_through_controller_signals(self) -> None:
         document_controller = FakeDocumentController()
         controller = SettingsController({}, document_controller)
         events = []
@@ -103,7 +103,7 @@ class SettingsControllerTests(unittest.TestCase):
         controller.connection_succeeded.connect(events.append)
         controller.connection_finished.connect(lambda: events.append("finished"))
 
-        with patch("ui.settings_controller.DSHTask", FakeDSHTask):
-            self.assertTrue(controller.test_dsh({"dsh_command": "dsh"}))
+        with patch("ui.settings_controller.AITask", FakeAITask):
+            self.assertTrue(controller.test_engine({"ai_command": "claude"}))
 
         self.assertEqual(events, ["started", "连接成功", "finished"])

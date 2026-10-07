@@ -9,7 +9,7 @@ from core.ai_workflow import AIWorkflowService
 from core.project import NovelProject
 
 
-class FakeDSH:
+class FakeEngine:
     def __init__(self, summary: str, state: dict):
         self.summary = summary
         self.state = state
@@ -29,7 +29,7 @@ class AIWorkflowTests(TestCase):
     def test_memory_workflow_keeps_prompt_sequence_and_parses_results(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = NovelProject.create(Path(tmp) / "proj", "测试")
-            dsh = FakeDSH(
+            engine = FakeEngine(
                 json.dumps(
                     {
                         "type": "chapter_summary",
@@ -52,21 +52,21 @@ class AIWorkflowTests(TestCase):
                 "core.ai_workflow.build_ai_context",
                 wraps=ai_workflow.build_ai_context,
             ) as build_context:
-                result = AIWorkflowService(dsh).update_memory(project, "chapter_01")
+                result = AIWorkflowService(engine).update_memory(project, "chapter_01")
 
             self.assertEqual(result[0], "主角抵达旧站。")
             self.assertEqual(result[1]["current_location"], "旧站")
             self.assertEqual(result[2], "摘要完成；状态完成")
-            self.assertEqual(len(dsh.generate_calls), 1)
-            self.assertEqual(len(dsh.json_calls), 1)
+            self.assertEqual(len(engine.generate_calls), 1)
+            self.assertEqual(len(engine.json_calls), 1)
             self.assertEqual(build_context.call_count, 1)
-            self.assertIn("chapter_summary", dsh.generate_calls[0][1])
-            self.assertIn("story_state_update", dsh.json_calls[0][1])
+            self.assertIn("chapter_summary", engine.generate_calls[0][1])
+            self.assertIn("story_state_update", engine.json_calls[0][1])
 
     def test_consistency_repair_uses_json_protocol(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = NovelProject.create(Path(tmp) / "proj", "测试")
-            dsh = FakeDSH(
+            engine = FakeEngine(
                 "unused",
                 {
                     "type": "consistency_repair",
@@ -80,7 +80,7 @@ class AIWorkflowTests(TestCase):
                     "preserved_facts": [],
                 },
             )
-            result = AIWorkflowService(dsh).repair_consistency(
+            result = AIWorkflowService(engine).repair_consistency(
                 project,
                 "chapter_01",
                 {
@@ -91,5 +91,5 @@ class AIWorkflowTests(TestCase):
                 },
             )
             self.assertEqual(result["replacement"], "修复句")
-            self.assertEqual(len(dsh.json_calls), 1)
-            self.assertIn("consistency_repair", dsh.json_calls[0][1])
+            self.assertEqual(len(engine.json_calls), 1)
+            self.assertIn("consistency_repair", engine.json_calls[0][1])

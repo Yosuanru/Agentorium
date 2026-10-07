@@ -19,7 +19,7 @@ from typing import Callable
 
 from PySide6.QtCore import QObject, Signal
 
-from ui.ai_task_runner import DSHTask
+from ui.ai_task_runner import AITask
 
 
 class ShardedTask(QObject):
@@ -37,7 +37,7 @@ class ShardedTask(QObject):
         self._shards = list(shards)
         self._worker = worker
         self._cancel = Event()
-        self._threads: list[DSHTask] = []
+        self._threads: list[AITask] = []
         self._results: list = []
         self._errors: list[str] = []
         self._done = 0
@@ -48,7 +48,7 @@ class ShardedTask(QObject):
             self.finished.emit()
             return
         for shard in self._shards:
-            thread = DSHTask(
+            thread = AITask(
                 lambda cancel, s=shard: self._worker(s, cancel), self._cancel, self)
             thread.success.connect(lambda result: self._one(result, None))
             thread.failed.connect(lambda message: self._one(None, message))

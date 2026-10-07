@@ -3,16 +3,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import (
     QAction,
     QCloseEvent,
-    QDesktopServices,
     QKeySequence,
     QShortcut,
 )
 from PySide6.QtWidgets import (
-    QApplication,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -23,7 +21,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QProgressBar,
-    QProgressDialog,
     QPushButton,
     QSplitter,
     QStackedWidget,
@@ -36,10 +33,10 @@ from core.paths import app_home, workspace_root
 from core.project import NovelProject
 from core.project_data import ChapterIdConflictError, ProjectDataStore
 from core.session import session_ending
-from core.version import AppVersion, load_current_version
+from core.version import load_current_version
 from ui.ai_controller import AIController
 from ui.ai_engine_controller import AIEngineController
-from ui.ai_task_runner import DSHTask
+from ui.ai_task_runner import AITask
 from ui.ai_task_view_controller import AITaskViewController
 from ui.ai_workflow_controller import AIWorkflowController
 from ui.appearance_controller import AppearanceController
@@ -643,12 +640,12 @@ class MainWindow(QMainWindow):
         self.reports_page.repair_requested.connect(self.ai_workflow_controller.repair_issue)
         self.export_page.export_requested.connect(self.export_manuscript)
         self.settings_page.save_requested.connect(self._apply_settings)
-        self.settings_page.test_requested.connect(self._test_dsh)
+        self.settings_page.test_requested.connect(self._test_engine)
         self.settings_controller.config_changed.connect(self._on_settings_changed)
-        self.settings_controller.connection_started.connect(self._on_dsh_test_started)
-        self.settings_controller.connection_succeeded.connect(self._on_dsh_test_succeeded)
-        self.settings_controller.connection_failed.connect(self._on_dsh_test_failed)
-        self.settings_controller.connection_finished.connect(self._on_dsh_test_finished)
+        self.settings_controller.connection_started.connect(self._on_engine_test_started)
+        self.settings_controller.connection_succeeded.connect(self._on_engine_test_succeeded)
+        self.settings_controller.connection_failed.connect(self._on_engine_test_failed)
+        self.settings_controller.connection_finished.connect(self._on_engine_test_finished)
         self.editor.dirty_changed.connect(self._on_dirty_changed)
         self.ai_controller.started.connect(self._on_ai_started)
         self.ai_controller.finished.connect(self._on_ai_finished)
@@ -1443,7 +1440,7 @@ class MainWindow(QMainWindow):
             return self.export_controller.export(
                 options, Path(output), format_name="txt" if plain_text else "md")
 
-        task = DSHTask(work, parent=self)
+        task = AITask(work, parent=self)
         task.success.connect(self._on_export_done)
         task.failed.connect(
             lambda error: QMessageBox.critical(self, "导出失败", str(error)))
@@ -1847,7 +1844,7 @@ class MainWindow(QMainWindow):
         def work(cancel_event):
             return client.generate(system, message, cancel_event=cancel_event)
 
-        self._chat_task = DSHTask(work, parent=self)
+        self._chat_task = AITask(work, parent=self)
         self._chat_task.success.connect(self._on_chat_reply)
         self._chat_task.failed.connect(self._on_chat_failed)
         self._chat_task.cancelled.connect(lambda: panel.set_busy(False, "已取消"))
@@ -2182,7 +2179,7 @@ class MainWindow(QMainWindow):
             self.workspace_page.set_busy(False)
             self.inspector.chat_panel.append("它", "并册已停。已经并进去的条目留着，没并的还在片段文件里。")
 
-        task = DSHTask(work, parent=self)
+        task = AITask(work, parent=self)
         task.success.connect(_done)
         task.failed.connect(_failed)
         task.cancelled.connect(_cancelled)
@@ -2260,22 +2257,22 @@ class MainWindow(QMainWindow):
         self._update_page_header(self.window_state_controller.current_route)
         self.status_message.setText(message)
 
-    def _test_dsh(self, config: object) -> None:
+    def _test_engine(self, config: object) -> None:
         if not isinstance(config, dict):
             return
-        self.settings_controller.test_dsh(config)
+        self.settings_controller.test_engine(config)
 
-    def _on_dsh_test_started(self) -> None:
+    def _on_engine_test_started(self) -> None:
         self.settings_page.set_test_status("正在检查 AI 引擎…")
         self.settings_page.test_button.setEnabled(False)
 
-    def _on_dsh_test_succeeded(self, result: str) -> None:
+    def _on_engine_test_succeeded(self, result: str) -> None:
         self.settings_page.set_test_status(str(result))
 
-    def _on_dsh_test_failed(self, error: str) -> None:
+    def _on_engine_test_failed(self, error: str) -> None:
         self.settings_page.set_test_status(f"检查失败：{error}")
 
-    def _on_dsh_test_finished(self) -> None:
+    def _on_engine_test_finished(self) -> None:
         self.settings_page.test_button.setEnabled(True)
 
     def show_about(self) -> None:
