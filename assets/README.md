@@ -10,6 +10,10 @@ interface, including Material Symbols Outlined. The application loads these
 files from this directory so a clean checkout does not depend on the original
 Stitch design-source folder.
 
+`social/` holds the project poster. `screenshots/` holds the interface
+screenshots referenced by the top-level `README.md` — they are documentation,
+not runtime assets, and the application never loads them.
+
 Unless a file states otherwise, original assets in this directory are included
 under the repository's MIT License. Contributors must only submit artwork they
 have the right to distribute.

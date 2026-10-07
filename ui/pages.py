@@ -954,15 +954,18 @@ class SettingsPage(QWidget):
         ai_layout.setSpacing(9)
         ai_title = QLabel("AI 引擎")
         ai_title.setObjectName("sectionTitle")
+        # ⚠️ 这段里有强调和换行，必须走 HTML：QLabel 默认纯文本，
+        # 直接写 `**加粗**` 会把星号原样画出来（2026-10-07 截图里露过这个相）。
         ai_hint = QLabel(
-            "两种后端二选一，看下面「引擎」那一格：\n"
-            "① **直连 API**——填上接口地址、密钥、模型名就能用，**什么都不用装**。"
+            "两种后端二选一，看下面「引擎」那一格：<br>"
+            "① <b>直连 API</b>——填上接口地址、密钥、模型名就能用，<b>什么都不用装</b>。"
             "扩写 / 一致性检查 / 更新记忆全都能跑；只有对话栏的「直接改文件」会退化成"
-            "「给你一段改稿，你点一下应用到正文」。\n"
-            "② **本机 claude 命令**——走 Claude Code（先 `npm i -g @anthropic-ai/claude-code`）。"
-            "功能最全：它是个真正的 agent，能自己读写文件、派子代理。\n"
+            "「给你一段改稿，你点一下应用到正文」。<br>"
+            "② <b>本机 claude 命令</b>——走 Claude Code（先 <b>npm i -g @anthropic-ai/claude-code</b>）。"
+            "功能最全：它是个真正的 agent，能自己读写文件、派子代理。<br>"
             "⚠️ 密钥只存在本机（%APPDATA%\\Agentorium\\config.json），不会进任何仓库。"
         )
+        ai_hint.setTextFormat(Qt.TextFormat.RichText)
         ai_hint.setObjectName("mutedLabel")
         ai_hint.setWordWrap(True)
         ai_layout.addWidget(ai_title)

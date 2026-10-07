@@ -107,7 +107,7 @@ class SwimlanePage(QWidget):
         if not data.ok:
             self.title.setText("框架图")
             self.hint.setText(
-                "还没有框架图。放一份 `outline/swimlanes.json`（整卷有几条线、"
+                "还没有框架图。放一份 outline/swimlanes.json（整卷有几条线、"
                 "每条线在哪几章亮着），这一页就画出来了。"
             )
             return
