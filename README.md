@@ -1,235 +1,145 @@
 # Agentorium
 
-> **把 AI 当工人管起来的多智能体生产线。**
-> 一个写手 agent 持续产出；一批**只读正文**的"外包读者"和一个**掌握全部设定**的"逻辑审"互相把关；
-> 靠**信息隔离 ＋ 交叉验证 ＋ 可追溯凭证**，让长周期生产不出错。
+> A local-first AI workspace for long-form novel writing.
 
-**它由两半组成，分清哪半是主力：**
+Agentorium helps individual authors and small creative teams keep a long story coherent over dozens or hundreds of chapters. It brings manuscripts, outlines, character sheets, worldbuilding, timelines, chapter summaries, story state, and plot threads into one local desktop workspace.
 
-| | 是什么 | 在哪 |
+## What It Solves
+
+Writing one chapter with AI is easy. Keeping characters, world rules, timelines, and foreshadowing consistent over a long project is much harder. A single conversation gradually loses context, and a model reviewing its own writing may miss its own mistakes.
+
+Agentorium addresses these problems with:
+
+- Local project files that remain portable and inspectable
+- AI-assisted text expansion
+- Consistency inspection against characters, world rules, systems, and timelines
+- Persistent chapter summaries, character state, and foreshadowing
+- Structured result validation before AI output is written back
+- Replaceable AI backends and explicit human approval
+
+Agentorium is not a one-click system for generating an entire novel. It is the workspace around a deliberate writing process: agents read and write project files, while the author reviews evidence, chooses revisions, and keeps final control of the story.
+
+## The Multi-Agent Workflow
+
+The wider workflow uses four specialized roles:
+
+| Role | Access | Responsibility |
 |---|---|---|
-| ⭐ **生产线** | 一个**长期记忆的写手 agent** 持续产出；另几个会话当**读者**和**校对**，靠信息隔离与交叉验证互相把关。**这半是主力。** | **终端里**（几个 agent 会话）——规矩见 **`DESIGN.md`** |
-| **工作台** | 人和 agent **共用的那张桌子**：稿子、设定、大纲、记忆、伏笔、摘要都躺在它的文件里；人靠它**看**进度和结构，也可以就地起一个 AI 任务 | **本仓库**（这个桌面程序） |
+| **Writer** | Manuscript, canon, outline, and memory | Drafts or revises chapters |
+| **Cold Reader** | Manuscript only | Reports where a first-time reader gets lost or disengaged |
+| **Permanent Reader** | New or changed chapters and its own notes | Checks continuity and whether revisions improved the reading experience |
+| **Logic Reviewer** | Manuscript, canon, outline, and memory | Finds factual, timeline, causal, and setting conflicts |
 
-**一句话：agent 在它上面读写，人靠它看。** 它不是"点了按钮就自动写完整本书"的那种东西——
-它是那条生产线的**桌面**。
+Information is intentionally isolated. Reader feedback is cross-checked before revision, and the Logic Reviewer can work independently before seeing other reviewers' opinions. The multi-agent pipeline is currently coordinated manually by the author, leaving creative judgment where it belongs: with the human author.
 
-**想接自己的 API**（DeepSeek 等任何 Anthropic 兼容端点），在设置里填三格就能用。
+## Screenshots
 
-**先看哪一份：**
+### Project overview
 
-| 文档 | 讲什么 |
-|---|---|
-| **`README.md`**（本文） | 这是什么 · 它解决什么问题 · 怎么装 · 怎么接 API |
-| ⭐ **`FILES.md`** | **文件地图**：先看什么 · **"工作逻辑"落在哪几行** · 其余目录各干什么 |
-| ⭐ **`DESIGN.md`** | **这套流程怎么运转**：四个位置、信息隔离、一轮怎么跑、凭证与台账、**每一层能不能换工具** |
-| **`NOTICE.md`** | **上游声明 ＋ 我们自己的声明** |
-| `PRIVACY.md` | 数据会发给谁 · 密钥存在哪 |
-| `PACKAGING.md` | 打包成 exe |
+![Project overview](assets/screenshots/01-overview-dark.png)
 
----
+### Story canon
 
-## 演示
+![Story canon](assets/screenshots/02-canon-dark.png)
 
-**项目总览**——左栏是书的结构，中间是进度与最近编辑，右边随时能跟 AI 说一句话。深浅两套主题：
+### Consistency report
 
-| 深色 | 浅色 |
-|---|---|
-| ![项目总览 · 深色](assets/screenshots/01-overview-dark.png) | ![项目总览 · 浅色](assets/screenshots/04-overview-light.png) |
+![Consistency report](assets/screenshots/03-report-dark.png)
 
-**故事资料**——角色卡 · 世界观 · 体系设定 · 时间线全在左栏树里，右边就地编辑；
-**AI 动笔时引的就是这些**（不是它自己现编的）：
+### Light theme
 
-![故事资料：角色卡与设定](assets/screenshots/02-canon-dark.png)
+![Light theme](assets/screenshots/04-overview-light.png)
 
-**检查报告**——拿这一章的正文，跟「故事资料」里的角色卡 / 世界观 / 体系对一遍，
-把对不上的列出来（人物记错了事 · 用了还没解锁的能力 · 前后时间对不上）：
+### AI settings
 
-![检查报告](assets/screenshots/03-report-dark.png)
+![AI settings](assets/screenshots/05-settings-ai.png)
 
-**设置 → AI 引擎**——两种后端二选一：**直连 API**（填三格就能用，什么都不用装）
-或**本机 `claude` 命令**（全功能）。密钥只存在本机，不进任何仓库：
+## Run Locally
 
-![设置 · AI 引擎](assets/screenshots/05-settings-ai.png)
+### Requirements
 
----
+- Python 3.10 or newer
+- Windows, macOS, or Linux
+- Optional: Claude Code CLI for the full local-agent workflow
 
-## 一、它解决什么问题
-
-让 AI 写一章不难。**让它写一百章还不跑偏，才是难的。** 长周期生产上有三个病：
-
-| 病 | 症状 |
-|---|---|
-| **跑飞** | 写到第 60 章，忘了第 12 章埋过什么 |
-| **串味** | 同一个模型自审自查，"我觉得挺好"，看不出自己的毛病 |
-| **验不了货** | 它说"我查过了"，你没法知道它真查了没有 |
-
-Agentorium 的全部设计，就是冲着这三条去的。
-
-## 二、四个角色，一道闸门
-
-```
-                      ┌──────────────────────────────┐
-                      │   工作台（本仓库）             │
-                      │   人和 agent 共享同一个现场     │
-                      └──────────────┬───────────────┘
-                                     │  同一批文件 · 同一份上下文
-        ┌────────────────────────────┼────────────────────────────┐
-        │                            │                            │
-   ┌────▼─────┐               ┌──────▼──────┐              ┌──────▼──────┐
-   │  写手     │               │  外包读者    │              │   逻辑审     │
-   │ writer   │               │ cold reader │              │ logic audit │
-   │ 持续产出  │               │ 只给正文     │              │ 给全套设定   │
-   └────┬─────┘               └──────┬──────┘              └──────┬──────┘
-        │  产出                       │  "我哪里难受"              │  "哪里对不上"
-        └──────────────┬─────────────┴────────────────────────────┘
-                       ▼
-              ┌──────────────────┐
-              │  工头（人）        │  交叉验证 → 判 → 一次改清 → 复审
-              └──────────────────┘
-```
-
-**信息隔离矩阵**（这张表才是核心）：
-
-| 给谁 | 正文 | 设定 / 大纲 | 前文记忆 | 别人的意见 |
-|---|:---:|:---:|:---:|:---:|
-| **写手** | ✅ | ✅ | ✅ | — |
-| **外包读者（冷读）** | ✅ | ❌ | ❌ | ❌ |
-| **常驻读者** | ✅（只给新章） | ❌ | 自己的总结 | ❌ |
-| **逻辑审** | ✅ | ✅ | ✅ | ⛔ **先不给** |
-
-**两道最要紧的闸门：**
-
-1. ⛔ **读者的意见，不许在逻辑审开工前给它。**
-   它拿着全套设定，是这方向的专家——**先给它答案，它就会顺着答，你永远测不出"它本来能不能自己发现"。**
-2. ⛔ **冷读那一路不许断。**
-   常驻读者读了几十轮之后，记忆会给疲劳"打疫苗"；只有**全新冷读者**能测出"一个什么都不知道的人，会不会追下去"。
-
-## 三、四条被跑出来的规矩
-
-| 规矩 | 一句话 |
-|---|---|
-| **诊断信读者，处方自己判** | 读者说"我哪里难受"——信；读者说"你该怎么治"——**自己判，且先拿去撞别的读者**。多数人的口味常常指向平庸。 |
-| **凭证可回查** | 每个 agent 的产出都要报"我用了哪条素材、原话是什么、落在哪"。**脚本能回查它有没有编。** |
-| **错误台账** | 同一类错犯了几次，**记数**。"有些错误犯一次就可以了。" |
-| **一次收齐、一次判完、一次改清** | 不许"改一个 → 再发现一个 → 再改"。那是把一本书改二十多版的原因。 |
-
-> 这四条不是设想——是在一个**真实的长篇项目**上，跑了几十批之后沉淀下来的。
-
-## 四、跑起来（两步）
-
-**1. 装 Python 依赖**
+### Install and start
 
 ```bash
 pip install -r requirements.txt
-```
-
-**2. 启动**
-
-```bash
 python main.py
 ```
 
-Windows 也可以双击 `run.bat`；要打包成 exe 见 `PACKAGING.md`。
+On Windows, you can also double-click `run.bat`, or use:
 
-> ⚠️ **Windows 上如果敲 `python` 没反应、或弹出一句"去微软商店安装"**——
-> 那是系统的**"应用执行别名"占位程序**挡在前面，**不代表你没装 Python**。
-> 改用 **`py main.py`** 启动（`py` 是 Windows 自带的启动器）；双击 `run.bat` 也行，
-> 它会自己先试 `python`、不行再试 `py`。
+```powershell
+py main.py
+```
 
-> **AI 怎么接？** 见第六节——**两条路**：
-> **直连 API**（只要地址和密钥，**什么都不用装**）或
-> **本机 claude 命令**（要装一次 Claude Code，功能最全）。
+The application stores projects as ordinary folders containing Markdown and JSON files. A project can be copied, inspected, versioned, or moved without a proprietary database.
 
-## 五、第一次用：从零到写出一章
+## AI Backends
 
-1. **建一本书**：左栏「新建」→ 起个名 → 选个空目录。
-2. **写第一章**：左边点开「章节 / 第 1 章」，在中间那一栏直接写。
-3. **找 AI 帮忙**：右边「对话」栏直接打字，比如「把这一章的开头改得更冷一些」。
-   它会给一段改后的正文，点 **「应用到正文」** 就写进去了。
-4. **让它记住**：写完点 **「更新记忆」**——摘要、伏笔、人物状态都进 `memory/`；
-   下一章它动笔时会**自动带上这些**（这就是长周期不跑偏的底子）。
-5. **看结构**：「分析」页有表格、关系图、框架图；「导出」页能整本导成 markdown 或纯文本。
+Agentorium supports two backends from **Settings → AI Engine**.
 
-> ⚠️ AI 任务要**读写你的项目文件**，所以它跑起来会花点时间——**那是在干活，不是卡住**。
-> 想知道它到底在忙什么，看 `DESIGN.md`。
+### Anthropic-compatible API
 
-## 六、接 AI：两条路，挑一条
+Enter an endpoint, API key, and model name. For example:
 
-打开面板 → **设置 → AI 引擎**，最上面那一格 **「引擎」** 选一个：
+```text
+Endpoint: https://api.deepseek.com/anthropic
+Model:    deepseek-v4-flash
+```
 
-### 路线 A · **直连 API**（推荐先试这条——什么都不用装）
+Any provider that exposes a compatible Messages API can be used. The key is stored in the user's local application configuration and is not written to the repository.
 
-选「直连 API」，填三格：
+### Local Claude Code CLI
 
-| 格子 | 填什么 |
-|---|---|
-| **接口地址** | DeepSeek：`https://api.deepseek.com/anthropic`　官方：`https://api.anthropic.com` |
-| **密钥** | 你的 API Key |
-| **模型名** | 例如 `deepseek-v4-flash` |
-
-点 **「保存设置」**，再点 **「测试能不能连上」**。
-
-**这条路上能用的**：AI 扩写 · 一致性检查 · 更新记忆 · 让 AI 出一段改稿
-（"应用到正文"要你自己点一下）。
-**用不了的**：对话栏里"让 AI 自己去改文件"那一下——直连没有工具调用，
-它会退化成"给你一段稿子，你点按钮应用"。
-
-### 路线 B · **本机 claude 命令**（全功能）
-
-选「本机 claude 命令」。它走的是 [Claude Code](https://claude.com/claude-code)：
+Install the CLI if needed:
 
 ```bash
-npm i -g @anthropic-ai/claude-code
+npm install --global @anthropic-ai/claude-code
 ```
 
-⚠️ **不需要 Anthropic 账号、不需要订阅**——`claude` 只是个客户端程序，
-请求打到哪、用什么模型、拿什么凭据，还是看上面那三格（留空就用它自己的登录）。
+The CLI backend supports the full agent workflow, including reading and writing project files. Leaving the API fields empty preserves the CLI's normal authentication behavior.
 
-**这条路的额外好处**：它是个**真正的 agent**——能自己读写项目文件、能派子代理。
-对话栏里"让它直接改稿"走的就这条。
+Before an AI result is saved, Agentorium validates its chapter ID, source-text anchors, permitted field range, and structured protocol format. Task snapshots and stale-result protection prevent an old task from silently overwriting newer work. File updates use atomic writes.
 
-### 两条路共同的
+## Technology
 
-- ✅ 密钥只存在本机 `%APPDATA%\Agentorium\config.json`，**不进仓库**。
-- ✅ 只要服务商提供 **Anthropic 兼容接口**，两条路都能接。
-- ✅ 路线 B 填了三格之后，**只有面板起的那个子进程**用这套配置——**不动你的系统环境**。
+- Python 3.10+
+- PySide6 desktop GUI
+- Markdown and JSON local storage
+- Python standard-library `urllib`
+- Anthropic-compatible Messages API
+- Claude Code CLI integration
+- Structured AI output protocols and context budgeting
+- Task snapshots, stale-result protection, and atomic writes
+- PyInstaller Windows packaging
 
-**连不上怎么排查**（按顺序试）：
+DeepSeek V4.1 Flash was used during development for code generation, refactoring suggestions, and debugging assistance. Project direction, requirements, feature decisions, integration, testing, documentation, and releases were handled by the project author.
 
-1. 路线 B 先在终端跑 `claude --version`——没有输出就是没装好。
-2. 面板里点 **「测试能不能连上」**——它会把真实报错写在按钮旁边。
-3. 报 401/403 → 密钥不对或没额度；报 404 → **接口地址**写错了（很多服务商要 `/anthropic` 后缀）。
-4. 报模型不存在 → **模型名**写错了，去服务商控制台抄准确的名字。
+## Project Structure
 
-## 七、目录结构
-
+```text
+main.py                 Application entry point
+core/                   Project, storage, AI, memory, and validation logic
+ui/                     Desktop interface and workflow views
+assets/                 Icons, fonts, and screenshots
+projects/               Example and user projects
+tests/                  Automated tests
+DESIGN.md               Multi-agent workflow and information boundaries
+FILES.md                File-by-file project map
+PRIVACY.md              Data handling and local storage notes
 ```
-main.py                 入口
-core/                   与界面无关的逻辑（配置 · 项目 · 提示词 · 记忆 · 伏笔 · 引擎适配）
-ui/                     界面（工作台 · 左栏树 · 表格 · 框架图 · 关系图 · 对话栏 · 设置）
-assets/                 图标与字体
-licenses/               第三方许可证文本
-tests/                  单元测试
-projects/               你的书就放在这儿（每本书一个目录）
-```
 
-一本书就是一个目录：`outline/`（大纲 · 章节）· `canon/`（设定 · 角色 · 世界观）·
-`memory/`（摘要 · 伏笔 · 状态）· `writing/`（文风 · 取用路由）。
+## Blockchain Status
 
-**逐件说明（哪个文件干什么、"工作逻辑"落在哪几行）见 [`FILES.md`](FILES.md)。**
+Not applicable. The current version does not use blockchain. Manuscripts, settings, memories, and task data are stored locally. AI requests are sent only to model services configured by the user. Agentorium does not simulate on-chain features or write private creative content to a public ledger.
 
-## 八、和上游的关系 ＋ 许可
+## Origin and License
 
-**本项目基于 [xiauho/novalist](https://github.com/xiauho/novalist) 二次开发（MIT License）。**
-上游的写作工作台框架与界面基础来自它；版权声明按 MIT 要求**原样保留在 `LICENSE` 里**。
+Agentorium is based on the open-source project [Novalist](https://github.com/xiauho/novalist). The upstream project and this derivative work follow the MIT License. See [`LICENSE`](LICENSE), [`NOTICE.md`](NOTICE.md), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for attribution and dependency notices.
 
-**本项目在上游之上新增的部分**（也就是这份提交真正的内容）：
+## Author
 
-- **AI 引擎换成可替换的**：上游绑定 `dsh`（DeepSeek Harness）；这里换成了本机 `claude` 命令，
-  并加了「设置页直接填接口地址 / 密钥 / 模型」——**任何 Anthropic 兼容端点都能接**。
-- **多智能体协作层**：写手 / 外包读者 / 逻辑审的角色编排，**信息隔离**，**交叉验证**，**凭证与错误台账**。
-- **一份可复用的管控方法论**：上面第三节那四条，以及"给谁什么信息"这套判断。
-- 界面与交互的重新设计，以及针对长周期写作的一批修复。
-
-完整的第三方依赖许可见 `THIRD_PARTY_NOTICES.md` 与 `licenses/`。
+Agentorium is built by an undergraduate Cyberspace Security student at Henan Normal University. The project is developed for authors who want the leverage of AI without giving up local data control or final creative judgment.
